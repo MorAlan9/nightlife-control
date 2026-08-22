@@ -46,7 +46,7 @@
                 🏛️ Boliche
             </button>
             <button id="btnModoAfter" onclick="cambiarModoEvento('after')" class="px-4 py-1.5 rounded-lg transition text-gray-400 hover:text-white">
-                🔥 Solo After
+                🪭 Solo After
             </button>
         </div>
 
@@ -80,7 +80,7 @@
                 Reg. Personal
             </button>
             <button id="tabManijaBtn" onclick="cambiarTabAuth('manija')" class="w-1/4 pb-2.5 text-pink-400 border-b-2 border-transparent">
-                🔥 Manija
+                🪭 Manija
             </button>
         </div>
 
@@ -177,12 +177,12 @@
         <!-- Modo Manija -->
         <div id="manijaForm" class="space-y-4 hidden text-center">
             <div class="bg-pink-950/30 p-3 rounded-xl border border-pink-900/50">
-                <span class="text-2xl block mb-1">🎉</span>
+                <span class="text-2xl block mb-1">🪭</span>
                 <h3 class="font-bold text-white text-sm">¡Bienvenido Manija!</h3>
                 <p class="text-xs text-pink-300">Ingresá sin cuenta para consultar si estás anotado en lista.</p>
             </div>
             <button onclick="ingresarComoManija()" class="w-full bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold py-3 rounded-xl transition shadow-lg text-sm">
-                🔥 Entrar Modo Manija
+                🪭 Entrar Modo Manija
             </button>
         </div>
 
@@ -357,7 +357,7 @@
                 <!-- After (Protegido por DNI) -->
                 <div class="bg-gray-950 p-3 rounded-xl border border-pink-900/40 space-y-2 relative overflow-hidden">
                     <div class="flex justify-between items-center">
-                        <span class="text-sm font-bold text-pink-400 flex items-center gap-1">🔥 After (Ubicación Protegida) 🔒</span>
+                        <span class="text-sm font-bold text-pink-400 flex items-center gap-1">⛓️ After (Ubicación Protegida) 🔒</span>
                         <button id="btnGuardarUbiAfter" onclick="guardarUbicacion('after')" class="hidden text-xs text-pink-400 hover:underline">Guardar</button>
                     </div>
 
@@ -426,11 +426,11 @@
                         </select>
                     </div>
                     <div id="cumpleContainer" class="hidden md:col-span-2 space-y-2 bg-pink-950/20 p-3 rounded-xl border border-pink-900/40">
-                        <label class="block text-xs text-pink-400 font-bold mb-1">🎂 Nombre del Cumpleañero/a</label>
+                        <label class="block text-xs text-pink-400 font-bold mb-1">🎧 Nombre del Cumpleañero/a</label>
                         <input type="text" id="cumpleanero" placeholder="Ej: Gonzalo Fernández" class="w-full bg-gray-950 border border-pink-900/60 rounded-lg p-2 text-sm text-white">
                         <div class="flex items-center gap-2 pt-1">
                             <input type="checkbox" id="esElCumpleanero" class="w-4 h-4 accent-pink-500">
-                            <label for="esElCumpleanero" class="text-xs text-pink-300 font-bold">👑 Esta persona ES EL CUMPLEAÑERO/A</label>
+                            <label for="esElCumpleanero" class="text-xs text-pink-300 font-bold">⚡ Esta persona ES EL CUMPLEAÑERO/A</label>
                         </div>
                     </div>
                     <div class="md:col-span-2">
@@ -593,7 +593,7 @@
         btnA.className = 'px-4 py-1.5 rounded-lg transition bg-pink-600 text-white shadow';
         btnB.className = 'px-4 py-1.5 rounded-lg transition text-gray-400 hover:text-white';
         bannerBox.className = 'bg-gray-900/80 p-3 rounded-xl border border-pink-900/40 flex justify-between items-center text-xs';
-        bannerText.innerText = '🔥 Mostrando datos del: SOLO AFTER';
+        bannerText.innerText = '🪭 Mostrando datos del: SOLO AFTER';
         document.getElementById('tituloTablaGeneral').innerText = '🔍 Control y Búsqueda (Exclusivo SOLO AFTER)';
         document.getElementById('tituloFormInvitado').innerText = '➕ Anotar Invitado a la Lista (AFTER)';
         document.getElementById('tituloSeccionDjs').innerText = '🎧 Lineup & Horarios (SOLO AFTER)';
@@ -660,7 +660,7 @@
     }
 
     function ingresarComoManija() {
-      usuarioActual = { id: 999, nombre: 'Soy Manija 🎉', username: 'manija', rol: 'Manija (Público)', aprobado: true, isAdmin: false, nombreBoliche: 'Público' };
+      usuarioActual = { id: 999, nombre: 'Soy Manija 🪭', username: 'manija', rol: 'Manija (Público)', aprobado: true, isAdmin: false, nombreBoliche: 'Público' };
       verificarSesion();
     }
 
@@ -1296,7 +1296,7 @@
         let detalleTipo = `<span class="font-medium text-gray-200">${prim.tipoLista}</span>`;
         if (prim.tipoLista === 'Cumpleaños') {
           if (prim.esCumpleanero) {
-            detalleTipo += `<span class="block text-amber-300 font-black text-[10px]">👑 CUMPLEAÑERO/A</span>`;
+            detalleTipo += `<span class="block text-amber-300 font-black text-[10px]">🎧 CUMPLEAÑERO/A</span>`;
           } else if (prim.cumpleanero) {
             detalleTipo += `<span class="block text-pink-400 text-[10px]">🎂 Cumple de: <strong>${prim.cumpleanero}</strong></span>`;
           }
