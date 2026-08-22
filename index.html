@@ -8,10 +8,13 @@
     <!-- Firebase JS SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <!-- Google Noto Color Emoji para renderizar abanico real en cualquier OS -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap" rel="stylesheet">
     <style>
         body { background-color: #0b0c10; color: #c5c6c7; }
         .clean-border { box-shadow: 0 4px 20px rgba(168, 85, 247, 0.15); }
         .line-through-fade { text-decoration: line-through; opacity: 0.35; background-color: rgba(15, 23, 42, 0.7); }
+        .emoji-fan { font-family: 'Noto Color Emoji', sans-serif; }
     </style>
 </head>
 <body class="min-h-screen pb-12 font-sans flex flex-col justify-between">
@@ -46,9 +49,8 @@
                 <button id="btnModoBoliche" onclick="cambiarModoEvento('boliche')" class="px-4 py-1.5 rounded-lg transition bg-purple-600 text-white shadow">
                     🏛️ Boliche
                 </button>
-                <button id="btnModoAfter" onclick="cambiarModoEvento('after')" class="px-4 py-1.5 rounded-lg transition text-gray-400 hover:text-white flex items-center gap-1">
-                    <svg class="w-3.5 h-3.5 text-pink-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9z"/><path d="M12 21v-9"/><path d="M16.5 20.1 13 12"/><path d="M7.5 20.1 11 12"/><path d="M19.8 16.5 14 12"/><path d="M4.2 16.5 10 12"/></svg>
-                    Solo After
+                <button id="btnModoAfter" onclick="cambiarModoEvento('after')" class="px-4 py-1.5 rounded-lg transition text-gray-400 hover:text-white">
+                    <span class="emoji-fan">🪭</span> Solo After
                 </button>
             </div>
 
@@ -81,9 +83,8 @@
                 <button id="tabRegPersonalBtn" onclick="cambiarTabAuth('regPersonal')" class="w-1/4 pb-2.5 text-gray-500 border-b-2 border-transparent">
                     Reg. Personal
                 </button>
-                <button id="tabManijaBtn" onclick="cambiarTabAuth('manija')" class="w-1/4 pb-2.5 text-pink-400 border-b-2 border-transparent flex items-center justify-center gap-1">
-                    <svg class="w-3.5 h-3.5 text-pink-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9z"/><path d="M12 21v-9"/><path d="M16.5 20.1 13 12"/><path d="M7.5 20.1 11 12"/><path d="M19.8 16.5 14 12"/><path d="M4.2 16.5 10 12"/></svg>
-                    Manija
+                <button id="tabManijaBtn" onclick="cambiarTabAuth('manija')" class="w-1/4 pb-2.5 text-pink-400 border-b-2 border-transparent">
+                    <span class="emoji-fan">🪭</span> Manija
                 </button>
             </div>
 
@@ -180,9 +181,7 @@
             <!-- Modo Manija -->
             <div id="manijaForm" class="space-y-4 hidden text-center">
                 <div class="bg-pink-950/30 p-3 rounded-xl border border-pink-900/50 space-y-2">
-                    <div class="w-10 h-10 mx-auto text-pink-400">
-                        <svg class="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9z"/><path d="M12 21v-9"/><path d="M16.5 20.1 13 12"/><path d="M7.5 20.1 11 12"/><path d="M19.8 16.5 14 12"/><path d="M4.2 16.5 10 12"/></svg>
-                    </div>
+                    <span class="text-3xl block emoji-fan">🪭</span>
                     <h3 class="font-bold text-white text-sm">¡Bienvenido Manija!</h3>
                     <p class="text-xs text-pink-300">Seleccioná el boliche o after para consultar tu lista:</p>
                     <div>
@@ -191,9 +190,8 @@
                         </select>
                     </div>
                 </div>
-                <button onclick="ingresarComoManija()" class="w-full bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold py-3 rounded-xl transition shadow-lg text-sm flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9z"/><path d="M12 21v-9"/><path d="M16.5 20.1 13 12"/><path d="M7.5 20.1 11 12"/><path d="M19.8 16.5 14 12"/><path d="M4.2 16.5 10 12"/></svg>
-                    Entrar Modo Manija
+                <button onclick="ingresarComoManija()" class="w-full bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold py-3 rounded-xl transition shadow-lg text-sm">
+                    <span class="emoji-fan">🪭</span> Entrar Modo Manija
                 </button>
             </div>
 
@@ -369,7 +367,7 @@
                     <div class="bg-gray-950 p-3 rounded-xl border border-pink-900/40 space-y-2 relative overflow-hidden">
                         <div class="flex justify-between items-center">
                             <span class="text-sm font-bold text-pink-400 flex items-center gap-1.5">
-                                <svg class="w-4 h-4 text-pink-400 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9z"/><path d="M12 21v-9"/><path d="M16.5 20.1 13 12"/><path d="M7.5 20.1 11 12"/><path d="M19.8 16.5 14 12"/><path d="M4.2 16.5 10 12"/></svg>
+                                <span class="emoji-fan">🪭</span>
                                 After (Ubicación Protegida) 🔒
                             </span>
                             <button id="btnGuardarUbiAfter" onclick="guardarUbicacion('after')" class="hidden text-xs text-pink-400 hover:underline">Guardar</button>
@@ -606,17 +604,17 @@
 
       if (modo === 'boliche') {
         btnB.className = 'px-4 py-1.5 rounded-lg transition bg-purple-600 text-white shadow';
-        btnA.className = 'px-4 py-1.5 rounded-lg transition text-gray-400 hover:text-white flex items-center gap-1';
+        btnA.className = 'px-4 py-1.5 rounded-lg transition text-gray-400 hover:text-white';
         bannerBox.className = 'bg-gray-900/80 p-3 rounded-xl border border-purple-900/40 flex justify-between items-center text-xs';
         bannerText.innerText = '🏛️ Mostrando datos del: BOLICHE PRINCIPAL';
         document.getElementById('tituloTablaGeneral').innerText = '🔍 Control y Búsqueda (Boliche Principal)';
         document.getElementById('tituloFormInvitado').innerText = '➕ Anotar Invitado a la Lista (Boliche)';
         document.getElementById('tituloSeccionDjs').innerText = '🎧 Lineup & Horarios (Boliche)';
       } else {
-        btnA.className = 'px-4 py-1.5 rounded-lg transition bg-pink-600 text-white shadow flex items-center gap-1';
+        btnA.className = 'px-4 py-1.5 rounded-lg transition bg-pink-600 text-white shadow';
         btnB.className = 'px-4 py-1.5 rounded-lg transition text-gray-400 hover:text-white';
         bannerBox.className = 'bg-gray-900/80 p-3 rounded-xl border border-pink-900/40 flex justify-between items-center text-xs';
-        bannerText.innerText = '🪭 Mostrando datos del: SOLO AFTER';
+        bannerText.innerHTML = '<span class="emoji-fan">🪭</span> Mostrando datos del: SOLO AFTER';
         document.getElementById('tituloTablaGeneral').innerText = '🔍 Control y Búsqueda (Exclusivo SOLO AFTER)';
         document.getElementById('tituloFormInvitado').innerText = '➕ Anotar Invitado a la Lista (AFTER)';
         document.getElementById('tituloSeccionDjs').innerText = '🎧 Lineup & Horarios (SOLO AFTER)';
@@ -662,7 +660,7 @@
       document.getElementById('tabLoginBtn').className = `w-1/4 pb-2.5 ${tab === 'login' ? 'text-purple-400 border-b-2 border-purple-500 font-bold' : 'text-gray-500 border-b-2 border-transparent'}`;
       document.getElementById('tabRegBolicheBtn').className = `w-1/4 pb-2.5 ${tab === 'regBoliche' ? 'text-purple-400 border-b-2 border-purple-500 font-bold' : 'text-gray-500 border-b-2 border-transparent'}`;
       document.getElementById('tabRegPersonalBtn').className = `w-1/4 pb-2.5 ${tab === 'regPersonal' ? 'text-indigo-400 border-b-2 border-indigo-500 font-bold' : 'text-gray-500 border-b-2 border-transparent'}`;
-      document.getElementById('tabManijaBtn').className = `w-1/4 pb-2.5 flex items-center justify-center gap-1 ${tab === 'manija' ? 'text-pink-400 border-b-2 border-pink-500 font-bold' : 'text-gray-500 border-b-2 border-transparent'}`;
+      document.getElementById('tabManijaBtn').className = `w-1/4 pb-2.5 ${tab === 'manija' ? 'text-pink-400 border-b-2 border-pink-500 font-bold' : 'text-gray-500 border-b-2 border-transparent'}`;
 
       if (tab === 'regPersonal') actualizarSelectBoliches();
       if (tab === 'manija') actualizarSelectBolichesManija();
