@@ -3,11 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b0c10">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%230b0c10'/%3E%3Cg stroke='%23c084fc' stroke-width='2.2' stroke-linecap='round'%3E%3Cline x1='4' y1='10' x2='4' y2='14'/%3E%3Cline x1='8' y1='6' x2='8' y2='18'/%3E%3Cline x1='12' y1='3' x2='12' y2='21'/%3E%3Cline x1='16' y1='8' x2='16' y2='16'/%3E%3Cline x1='20' y1='11' x2='20' y2='13'/%3E%3C/g%3E%3C/svg%3E">
     <title>SomosManijas - Gestor de Boliches & Afters</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Firebase JS SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <!-- Google Noto Color Emoji -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap" rel="stylesheet">
     <style>
@@ -80,6 +83,9 @@
         </div>
     </header>
 
+    <!-- AVISO DE CONEXIÓN / PERMISOS DE LA BASE -->
+    <div id="bannerConexion" role="alert" class="hidden bg-red-950/90 border-b border-red-800 text-red-200 text-xs text-center px-4 py-2"></div>
+
     <main class="max-w-5xl mx-auto p-4 space-y-6">
 
         <!-- SECCIÓN LOGIN / ACCESOS -->
@@ -104,29 +110,24 @@
             <form id="loginForm" onsubmit="iniciarSesion(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">Nombre de Usuario</label>
-                    <input type="text" id="loginUsuario" oninput="validarContrasenaEnVivo()" required placeholder="panda" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-sm text-white focus:border-purple-500 focus:outline-none">
+                    <input type="text" id="loginUsuario" autocomplete="username" autocapitalize="none" required placeholder="tu usuario" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-sm text-white focus:border-purple-500 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">Contraseña</label>
                     <div class="relative">
-                        <input type="password" id="loginPassword" oninput="validarContrasenaEnVivo()" required class="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 pr-10 text-sm text-white focus:border-purple-500 focus:outline-none">
+                        <input type="password" id="loginPassword" oninput="validarContrasenaEnVivo()" autocomplete="current-password" required class="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 pr-10 text-sm text-white focus:border-purple-500 focus:outline-none">
                         <button type="button" onclick="togglePasswordVisibility('loginPassword', 'eyeIconLogin')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition">
                             <span id="eyeIconLogin">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                             </span>
                         </button>
                     </div>
-                    <!-- INDICADOR OCULTO (ANIMADO SIN MOSTRAR LETRA) -->
-                    <div id="passwordFeedback" class="flex flex-wrap items-center gap-1.5 mt-2.5 min-h-[24px]"></div>
+                    <!-- Un puntito animado por letra escrita (no revela nada de la clave) -->
+                    <div id="passwordFeedback" class="flex flex-wrap items-center gap-1.5 mt-2.5 min-h-[24px]" aria-hidden="true"></div>
                 </div>
-                <button type="submit" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold py-3 rounded-xl transition shadow-lg text-sm">
+                <button type="submit" id="btnIngresar" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-60 text-white font-bold py-3 rounded-xl transition shadow-lg text-sm">
                     Ingresar
                 </button>
-                <div class="text-center pt-2">
-                    <button type="button" onclick="forzarReseteoPanda()" class="text-[10px] text-gray-500 hover:text-purple-400 underline">
-                        ⚠️ Reseteo de Emergencia
-                    </button>
-                </div>
             </form>
 
             <!-- Form Registro 1: NUEVO BOLICHE O AFTER -->
@@ -153,7 +154,7 @@
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">Contraseña</label>
                     <div class="relative">
-                        <input type="password" id="regBolichePassword" required class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 pr-10 text-sm text-white focus:border-purple-500 focus:outline-none">
+                        <input type="password" id="regBolichePassword" required minlength="6" autocomplete="new-password" placeholder="Mínimo 6 caracteres" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 pr-10 text-sm text-white focus:border-purple-500 focus:outline-none">
                         <button type="button" onclick="togglePasswordVisibility('regBolichePassword', 'eyeIconRegBoliche')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition">
                             <span id="eyeIconRegBoliche">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
@@ -200,7 +201,7 @@
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">Contraseña</label>
                     <div class="relative">
-                        <input type="password" id="regPersonalPassword" required class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 pr-10 text-sm text-white focus:border-purple-500 focus:outline-none">
+                        <input type="password" id="regPersonalPassword" required minlength="6" autocomplete="new-password" placeholder="Mínimo 6 caracteres" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 pr-10 text-sm text-white focus:border-purple-500 focus:outline-none">
                         <button type="button" onclick="togglePasswordVisibility('regPersonalPassword', 'eyeIconRegPersonal')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition">
                             <span id="eyeIconRegPersonal">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
@@ -248,6 +249,19 @@
                 </div>
             </section>
 
+            <!-- SELECTOR DE NOCHE / EVENTO -->
+            <section id="barraEvento" class="hidden flex flex-wrap items-center gap-2 bg-gray-900/90 p-3 rounded-2xl border border-gray-800 text-xs">
+                <span class="text-gray-400">🗓️ Noche:</span>
+                <select id="selectorEvento" onchange="cambiarEvento(this.value)" class="bg-gray-950 text-purple-200 border border-gray-800 rounded p-2 text-xs min-w-[10rem]"></select>
+                <span id="badgeEventoActivo" class="hidden text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded-full">Visible para el público</span>
+                <div id="accionesEvento" class="hidden flex gap-2 ml-auto">
+                    <button id="btnEventoActivo" onclick="marcarEventoActivo()" class="bg-gray-800 hover:bg-gray-700 text-gray-200 px-3 py-1.5 rounded-lg transition">Marcar como activa</button>
+                    <button onclick="abrirModalEvento()" class="bg-purple-900/60 hover:bg-purple-800 text-purple-100 border border-purple-700 font-bold px-3 py-1.5 rounded-lg transition">＋ Nueva noche</button>
+                </div>
+            </section>
+
+            <div id="sinEventoAviso" class="hidden bg-amber-950/30 border border-amber-800/60 text-amber-200 text-xs rounded-xl p-4 text-center"></div>
+
             <!-- BANNER DE MODO ACTUAL -->
             <div id="bannerModoActual" class="bg-gray-900/80 p-3 rounded-xl border border-purple-900/40 flex justify-between items-center text-xs">
                 <span id="textoBannerModo" class="font-bold text-purple-200">🏛️ Mostrando datos del: BOLICHE PRINCIPAL</span>
@@ -256,13 +270,13 @@
 
             <!-- BARRA DE HERRAMIENTAS DEMO PROTEGIDA CON CONTRASEÑA -->
             <section id="barAdminTools" class="hidden flex flex-wrap gap-3 justify-between items-center bg-gray-900/90 p-3 rounded-2xl border border-gray-800">
-                <span class="text-xs text-gray-400">👑 Acciones Especiales:</span>
+                <span class="text-xs text-gray-400">🐼 Acciones de Panda (sobre la noche elegida):</span>
                 <div class="flex gap-2">
-                    <button onclick="solicitarClaveAccion('demo')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-3 py-2 rounded-xl transition shadow">
+                    <button onclick="cargarDatosDemo()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-3 py-2 rounded-xl transition shadow">
                         ⚡ Cargar Datos Ejemplo (DEMO)
                     </button>
-                    <button onclick="solicitarClaveAccion('borrar')" class="bg-red-950 hover:bg-red-900 text-red-300 border border-red-800 font-bold text-xs px-3 py-2 rounded-xl transition">
-                        🗑️ Formatear / Borrar Todo
+                    <button onclick="borrarDatosDeLaNoche()" class="bg-red-950 hover:bg-red-900 text-red-300 border border-red-800 font-bold text-xs px-3 py-2 rounded-xl transition">
+                        🗑️ Borrar los datos de esta noche
                     </button>
                 </div>
             </section>
@@ -270,7 +284,7 @@
             <!-- PANEL ADMIN LOCAL: PERMISOS -->
             <section id="panelAdmin" class="hidden bg-purple-950/20 p-5 rounded-2xl border border-purple-800/40 space-y-4">
                 <h2 class="text-xs font-bold text-purple-300 uppercase tracking-wider flex items-center gap-2">
-                    🛡️ Permisos de Usuarios del Boliche
+                    🛡️ Personal del Boliche (aprobaciones y permisos)
                 </h2>
                 <div id="listaUsuariosGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                     <!-- Usuarios local -->
@@ -383,8 +397,20 @@
                 </div>
             </section>
 
+            <!-- CONSULTA PÚBLICA (MANIJA): solo se ve el lugar propio, buscando por DNI -->
+            <section id="seccionManija" class="hidden bg-gray-900/90 p-5 rounded-2xl border border-pink-900/50 space-y-3">
+                <h2 class="text-base font-bold text-white flex items-center gap-2"><span class="emoji-fan">🪭</span> Consultá tu lugar en la lista</h2>
+                <p class="text-xs text-gray-400">Ingresá tu DNI (sin puntos). Por privacidad no se muestra la lista de los demás.</p>
+                <form onsubmit="consultarDniManija(event)" class="flex gap-2">
+                    <input type="text" id="inputDniManija" inputmode="numeric" autocomplete="off" placeholder="Tu DNI" class="w-full bg-black text-sm text-white p-2.5 rounded-lg border border-pink-800 focus:outline-none focus:border-pink-500">
+                    <button type="submit" class="bg-pink-600 hover:bg-pink-500 text-white font-bold text-sm px-4 rounded-lg">Consultar</button>
+                </form>
+                <div id="resultadoManija" class="space-y-2 text-sm" aria-live="polite"></div>
+                <a id="btnBolicheManija" href="#" target="_blank" rel="noopener" class="hidden inline-block text-xs bg-purple-900/60 hover:bg-purple-800 text-purple-200 px-3 py-1 rounded transition">🗺️ Abrir Mapa Boliche</a>
+            </section>
+
             <!-- UBICACIONES Y BLINDAJE DE AFTER -->
-            <section class="bg-gray-900/90 p-4 rounded-2xl border border-purple-900/40 space-y-3">
+            <section id="seccionUbicaciones" class="bg-gray-900/90 p-4 rounded-2xl border border-purple-900/40 space-y-3">
                 <h2 class="text-xs font-bold text-purple-400 uppercase tracking-wider">📍 Ubicaciones & Mapas</h2>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -414,14 +440,6 @@
                             <a id="btnAfter" href="#" target="_blank" class="hidden inline-block text-xs bg-pink-900/60 hover:bg-pink-800 text-pink-200 px-3 py-1 rounded transition">🗺️ Abrir Mapa After</a>
                         </div>
 
-                        <div id="bloqueoAfterManija" class="hidden bg-pink-950/80 p-2.5 rounded-lg border border-pink-700 text-center space-y-1.5">
-                            <span class="text-[10px] text-pink-200 block font-bold">🔒 Ubicación Secreta Anti-Infiltrados</span>
-                            <span class="text-[9px] text-gray-300 block">Ingresá tu DNI para verificar si estás en lista y ver el mapa:</span>
-                            <div class="flex gap-1">
-                                <input type="text" id="inputDniVerificarAfter" placeholder="Tu DNI sin puntos" class="w-full bg-black text-xs text-white p-1.5 rounded border border-pink-800">
-                                <button onclick="verificarDniVerMapaAfter()" class="bg-pink-600 hover:bg-pink-500 text-white font-bold text-xs px-2 rounded">Ver 🗺️</button>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </section>
@@ -430,31 +448,24 @@
             <section id="seccionListaControl" class="bg-gray-900/90 p-5 rounded-2xl border border-gray-800 space-y-4">
                 <div class="flex flex-col md:flex-row justify-between md:items-center gap-3">
                     <h2 id="tituloTablaGeneral" class="text-base font-bold text-white">🔍 Control y Búsqueda (Boliche Principal)</h2>
-                    <select id="filtroRppTabla" onchange="filtrarInvitados()" class="bg-gray-950 text-xs border border-gray-800 rounded p-2 text-purple-300">
-                        <option value="TODOS">Ver Todas las Listas</option>
-                    </select>
-                </div>
-
-                <!-- FILTRO DE RANGO DE FECHAS (DESDE / HASTA) -->
-                <div class="bg-gray-950 p-3 rounded-xl border border-gray-800/80 flex flex-wrap items-center gap-3 text-xs">
-                    <span class="text-purple-400 font-bold flex items-center gap-1">📅 Rango de Fechas:</span>
-                    <div class="flex items-center gap-1.5">
-                        <label class="text-gray-400 text-[10px]">Desde:</label>
-                        <input type="date" id="fechaDesde" onchange="filtrarInvitados()" class="bg-gray-900 border border-gray-800 rounded p-1.5 text-xs text-white">
+                    <div class="flex flex-wrap gap-2">
+                        <select id="filtroTipoLista" onchange="filtrarInvitados()" class="bg-gray-950 text-xs border border-gray-800 rounded p-2 text-purple-300">
+                            <option value="TODOS">Todos los tipos</option>
+                            <option value="Free">Free</option>
+                            <option value="Cumpleaños">Cumpleaños</option>
+                            <option value="Entrada Paga">Entrada Paga</option>
+                        </select>
+                        <select id="filtroRppTabla" onchange="filtrarInvitados()" class="bg-gray-950 text-xs border border-gray-800 rounded p-2 text-purple-300">
+                            <option value="TODOS">Ver Todas las Listas</option>
+                        </select>
                     </div>
-                    <div class="flex items-center gap-1.5">
-                        <label class="text-gray-400 text-[10px]">Hasta:</label>
-                        <input type="date" id="fechaHasta" onchange="filtrarInvitados()" class="bg-gray-900 border border-gray-800 rounded p-1.5 text-xs text-white">
-                    </div>
-                    <button onclick="limpiarFiltroFechas()" class="text-[10px] text-gray-500 hover:text-purple-400 underline ml-auto">
-                        Limpiar Rango
-                    </button>
                 </div>
 
                 <input
                         type="text"
                         id="searchInput"
-                        placeholder="Buscar por Nombre, DNI o Cumpleañero..."
+                        placeholder="Buscar por Nombre, DNI, Teléfono o Cumpleañero..."
+                        autocomplete="off"
                         class="w-full bg-gray-950 border border-purple-700/50 rounded-xl p-3.5 text-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
                         oninput="filtrarInvitados()"
                 >
@@ -474,7 +485,7 @@
                         </div>
                         <div>
                             <label class="block text-xs text-gray-400 mb-1">DNI / Documento</label>
-                            <input type="text" id="documento" required class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm text-white">
+                            <input type="text" id="documento" inputmode="numeric" required class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm text-white">
                         </div>
                         <div>
                             <label class="block text-xs text-gray-400 mb-1">Teléfono (WhatsApp)</label>
@@ -535,6 +546,31 @@
     </p>
 </footer>
 
+<!-- MODAL NUEVA NOCHE -->
+<div id="modalEvento" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-gray-900 border border-purple-800/60 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
+        <div class="flex justify-between items-center border-b border-gray-800 pb-3">
+            <h3 class="text-sm font-bold text-white">🗓️ Nueva noche</h3>
+            <button onclick="cerrarModalEvento()" aria-label="Cerrar" class="text-gray-400 hover:text-white text-xs">✕</button>
+        </div>
+        <form onsubmit="crearEvento(event)" class="space-y-3 text-xs">
+            <div>
+                <label class="block text-gray-400 mb-1">Nombre de la noche</label>
+                <input type="text" id="eventoNombre" required maxlength="80" placeholder="Ej: Sábado 18/10 - Fiesta Neón" class="w-full bg-gray-950 border border-gray-800 rounded p-2.5 text-white focus:border-purple-500 focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-gray-400 mb-1">Fecha</label>
+                <input type="date" id="eventoFecha" required class="w-full bg-gray-950 border border-gray-800 rounded p-2.5 text-white focus:border-purple-500 focus:outline-none">
+            </div>
+            <label class="flex items-center gap-2 text-gray-300">
+                <input type="checkbox" id="eventoCopiarConfig" checked class="w-4 h-4 accent-purple-500">
+                Copiar precios y ubicaciones de la noche anterior
+            </label>
+            <button type="submit" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 rounded-xl transition">Crear noche</button>
+        </form>
+    </div>
+</div>
+
 <!-- MODAL MI CUENTA PERSONAL -->
 <div id="modalMiCuenta" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-gray-900 border border-purple-800/60 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl">
@@ -561,7 +597,7 @@
             <div class="pt-2 border-t border-gray-800">
                 <label class="block text-gray-400 mb-1">Nueva Contraseña</label>
                 <div class="relative">
-                    <input type="password" id="cuentaPassword" placeholder="Dejar en blanco para mantener la actual" class="w-full bg-gray-950 border border-gray-800 rounded p-2.5 pr-10 text-white focus:border-purple-500 focus:outline-none">
+                    <input type="password" id="cuentaPassword" minlength="6" autocomplete="new-password" placeholder="Dejar en blanco para mantener la actual" class="w-full bg-gray-950 border border-gray-800 rounded p-2.5 pr-10 text-white focus:border-purple-500 focus:outline-none">
                     <button type="button" onclick="togglePasswordVisibility('cuentaPassword', 'eyeIconCuenta')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition">
                         <span id="eyeIconCuenta">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
@@ -596,1016 +632,6 @@
     </div>
 </div>
 
-<script>
-    // CREDANCIALES DE FIREBASE
-    const firebaseConfig = {
-      apiKey: "AIzaSyDm3MjL9Drba2G19vzrgeNiuPWx76ipd3g",
-      authDomain: "somosmanijas-1bb2c.firebaseapp.com",
-      databaseURL: "https://somosmanijas-1bb2c-default-rtdb.firebaseio.com",
-      projectId: "somosmanijas-1bb2c",
-      storageBucket: "somosmanijas-1bb2c.firebasestorage.app",
-      messagingSenderId: "524196071103",
-      appId: "1:524196071103:web:41521ec5ed5a8cdcfc680a"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    const CLAVE_MAESTRA = 'EstoEstaEchoParaDios';
-    const CLAVE_RESETEO_PANDA = '42978187AlanRodrigoMoreno09102000';
-
-    const PANDA_SUPERADMIN = {
-      id: 1,
-      nombre: 'Panda Central',
-      username: 'panda',
-      rol: 'SuperAdmin Central',
-      pass: 'EstoEstaEchoParaDios',
-      nombreBoliche: 'SOMOSMANIJAS CENTRAL',
-      aprobado: true,
-      isAdmin: true,
-      isSuperAdmin: true
-    };
-
-    let usuarios = [PANDA_SUPERADMIN];
-    let usuarioActual = JSON.parse(localStorage.getItem('vortexx_current_user')) || null;
-    let invitados = [];
-    let djs = [];
-    let ubicaciones = { boliche: '', after: '' };
-    let cajaPrecios = { boliche: 0, after: 0, pagoCabeza: 1000, sePagaRPP: true, sePagaDJ: true };
-    let historialLogs = [];
-
-    let modoEventoActual = 'boliche';
-    let hoyStr = new Date().toISOString().split('T')[0];
-
-    // MOSTRAR / OCULTAR CONTRASEÑA (OJO VECTORIAL SVG)
-    const SVG_OJO_ABIERTO = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>`;
-    const SVG_OJO_CERRADO = `<svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858-5.908a10.025 10.025 0 013.858-.863c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21M3 3l18 18"/></svg>`;
-
-    function togglePasswordVisibility(inputId, iconId) {
-      const input = document.getElementById(inputId);
-      const icon = document.getElementById(iconId);
-      if (input.type === 'password') {
-        input.type = 'text';
-        icon.innerHTML = SVG_OJO_CERRADO;
-      } else {
-        input.type = 'password';
-        icon.innerHTML = SVG_OJO_ABIERTO;
-      }
-    }
-
-    // VALIDACIÓN ANIMADA ANÓNIMA (NO MUESTRA LA LETRA)
-    function validarContrasenaEnVivo() {
-      const usernameInput = document.getElementById('loginUsuario').value.trim().toLowerCase();
-      const passInput = document.getElementById('loginPassword').value;
-      const feedback = document.getElementById('passwordFeedback');
-
-      if (!passInput) {
-        feedback.innerHTML = '';
-        return;
-      }
-
-      const targetUser = usuarios.find(u => u.username.toLowerCase() === usernameInput);
-      let realPass = targetUser ? targetUser.pass : '';
-
-      if (usernameInput === 'panda') {
-        realPass = CLAVE_MAESTRA;
-      }
-
-      if (!realPass) {
-        feedback.innerHTML = '<span class="text-gray-500 italic text-[11px]">Ingresá tu usuario primero</span>';
-        return;
-      }
-
-      let html = '';
-      for (let i = 0; i < passInput.length; i++) {
-        const charIngresado = passInput[i];
-        const charReal = realPass[i];
-
-        if (charReal !== undefined && charIngresado === charReal) {
-          html += `<span class="anim-pop w-5 h-5 rounded-full bg-emerald-950/90 text-emerald-400 border border-emerald-500/80 font-bold text-[10px] flex items-center justify-center shadow-md shadow-emerald-950/50">✓</span>`;
-        } else {
-          html += `<span class="anim-pop w-5 h-5 rounded-full bg-red-950/90 text-red-400 border border-red-500/80 font-bold text-[10px] flex items-center justify-center shadow-md shadow-red-950/50">✗</span>`;
-        }
-      }
-      feedback.innerHTML = html;
-    }
-
-    function limpiarFiltroFechas() {
-      document.getElementById('fechaDesde').value = '';
-      document.getElementById('fechaHasta').value = '';
-      filtrarInvitados();
-    }
-
-    // ESCUCHAR CAMBIOS EN TIEMPO REAL DESDE FIREBASE
-    function suscribirFirebase() {
-      db.ref('vortexx_users').on('value', snap => {
-        const data = snap.val();
-        let list = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
-        list = list.filter(u => u.username !== 'panda');
-        list.unshift(PANDA_SUPERADMIN);
-        usuarios = list;
-        if (usuarioActual && usuarioActual.username === 'panda') renderizarPanelSuperAdminPanda();
-        if (usuarioActual && usuarioActual.isAdmin) renderizarGestionUsuariosAdmin();
-        actualizarSelectBolichesManija();
-      });
-
-      db.ref('vortexx_guests').on('value', snap => {
-        const data = snap.val();
-        invitados = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
-        renderizarTodo();
-      });
-
-      db.ref('vortexx_djs').on('value', snap => {
-        const data = snap.val();
-        djs = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
-        renderizarDJs();
-      });
-
-      db.ref('vortexx_ubis').on('value', snap => {
-        ubicaciones = snap.val() || { boliche: '', after: '' };
-        renderizarUbicaciones();
-      });
-
-      db.ref('vortexx_precios').on('value', snap => {
-        cajaPrecios = snap.val() || { boliche: 0, after: 0, pagoCabeza: 1000, sePagaRPP: true, sePagaDJ: true };
-        renderizarTodo();
-      });
-
-      db.ref('vortexx_logs').on('value', snap => {
-        const data = snap.val();
-        historialLogs = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
-        renderizarHistorialLogs();
-      });
-    }
-
-    function abrirModalMiCuenta() {
-      if (!usuarioActual) return;
-      document.getElementById('cuentaUsername').value = usuarioActual.username;
-      document.getElementById('cuentaNombre').value = usuarioActual.nombre || '';
-      document.getElementById('cuentaTel').value = usuarioActual.tel || '';
-      document.getElementById('cuentaPassword').value = '';
-      document.getElementById('modalMiCuenta').classList.remove('hidden');
-    }
-
-    function cerrarModalMiCuenta() {
-      document.getElementById('modalMiCuenta').classList.add('hidden');
-    }
-
-    function actualizarMiCuenta(e) {
-      e.preventDefault();
-      if (!usuarioActual) return;
-
-      const nuevoNombre = document.getElementById('cuentaNombre').value.trim();
-      const nuevoTel = document.getElementById('cuentaTel').value.trim();
-      const nuevaPass = document.getElementById('cuentaPassword').value.trim();
-
-      const index = usuarios.findIndex(u => u.username === usuarioActual.username);
-      if (index !== -1) {
-        usuarios[index].nombre = nuevoNombre;
-        usuarios[index].tel = nuevoTel;
-        if (nuevaPass) usuarios[index].pass = nuevaPass;
-
-        usuarioActual = { ...usuarios[index] };
-        localStorage.setItem('vortexx_current_user', JSON.stringify(usuarioActual));
-
-        db.ref('vortexx_users').set(usuarios);
-        registrarLog(`Actualizó sus datos personales de cuenta`);
-
-        document.getElementById('headerUserName').innerText = usuarioActual.nombre;
-        alert('✅ Datos de cuenta actualizados correctamente.');
-        cerrarModalMiCuenta();
-      }
-    }
-
-    function forzarReseteoPanda() {
-      const claveAcceso = prompt('🔐 Para autorizar el reseteo de Panda, ingresá tu Clave de Seguridad Maestra:');
-      if (claveAcceso === CLAVE_RESETEO_PANDA) {
-        db.ref('vortexx_users').set([PANDA_SUPERADMIN]);
-        alert('✅ Credenciales de Panda restablecidas correctamente.');
-      } else if (claveAcceso !== null) {
-        alert('❌ Clave de Seguridad incorrecta.');
-      }
-    }
-
-    function cambiarModoEvento(modo) {
-      modoEventoActual = modo;
-      const btnB = document.getElementById('btnModoBoliche');
-      const btnA = document.getElementById('btnModoAfter');
-      const bannerText = document.getElementById('textoBannerModo');
-      const bannerBox = document.getElementById('bannerModoActual');
-
-      if (modo === 'boliche') {
-        btnB.className = 'px-4 py-1.5 rounded-lg transition bg-purple-600 text-white shadow';
-        btnA.className = 'px-4 py-1.5 rounded-lg transition text-gray-400 hover:text-white';
-        bannerBox.className = 'bg-gray-900/80 p-3 rounded-xl border border-purple-900/40 flex justify-between items-center text-xs';
-        bannerText.innerText = '🏛️ Mostrando datos del: BOLICHE PRINCIPAL';
-        document.getElementById('tituloTablaGeneral').innerText = '🔍 Control y Búsqueda (Boliche Principal)';
-        document.getElementById('tituloFormInvitado').innerText = '➕ Anotar Invitado a la Lista (Boliche)';
-        document.getElementById('tituloSeccionDjs').innerText = '🎧 Lineup & Horarios (Boliche)';
-      } else {
-        btnA.className = 'px-4 py-1.5 rounded-lg transition bg-pink-600 text-white shadow';
-        btnB.className = 'px-4 py-1.5 rounded-lg transition text-gray-400 hover:text-white';
-        bannerBox.className = 'bg-gray-900/80 p-3 rounded-xl border border-pink-900/40 flex justify-between items-center text-xs';
-        bannerText.innerHTML = '<span class="emoji-fan">🪭</span> Mostrando datos del: SOLO AFTER';
-        document.getElementById('tituloTablaGeneral').innerText = '🔍 Control y Búsqueda (Exclusivo SOLO AFTER)';
-        document.getElementById('tituloFormInvitado').innerText = '➕ Anotar Invitado a la Lista (AFTER)';
-        document.getElementById('tituloSeccionDjs').innerText = '🎧 Lineup & Horarios (SOLO AFTER)';
-      }
-
-      renderizarTodo();
-    }
-
-    function registrarLog(accion) {
-      const hora = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      const usuarioNom = usuarioActual ? usuarioActual.nombre : 'Sistema';
-      const bolicheNom = usuarioActual ? usuarioActual.nombreBoliche : 'General';
-      const log = `[${hora}] [${bolicheNom}] [${modoEventoActual.toUpperCase()}] ${usuarioNom}: ${accion}`;
-      historialLogs.unshift(log);
-      if (historialLogs.length > 50) historialLogs.pop();
-      db.ref('vortexx_logs').set(historialLogs);
-    }
-
-    function renderizarHistorialLogs() {
-      const container = document.getElementById('listaHistorialLogs');
-      document.getElementById('badgeHistorial').innerText = `${historialLogs.length} registros`;
-      container.innerHTML = '';
-
-      if (historialLogs.length === 0) {
-        container.innerHTML = `<p class="text-gray-500 italic p-1">No hay modificaciones registradas.</p>`;
-        return;
-      }
-
-      historialLogs.forEach(log => {
-        const div = document.createElement('div');
-        div.className = 'py-1 text-gray-300 hover:text-white transition';
-        div.innerText = log;
-        container.appendChild(div);
-      });
-    }
-
-    function cambiarTabAuth(tab) {
-      document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
-      document.getElementById('registerBolicheForm').classList.toggle('hidden', tab !== 'regBoliche');
-      document.getElementById('registerPersonalForm').classList.toggle('hidden', tab !== 'regPersonal');
-      document.getElementById('manijaForm').classList.toggle('hidden', tab !== 'manija');
-
-      document.getElementById('tabLoginBtn').className = `w-1/4 pb-2.5 ${tab === 'login' ? 'text-purple-400 border-b-2 border-purple-500 font-bold' : 'text-gray-500 border-b-2 border-transparent'}`;
-      document.getElementById('tabRegBolicheBtn').className = `w-1/4 pb-2.5 ${tab === 'regBoliche' ? 'text-purple-400 border-b-2 border-purple-500 font-bold' : 'text-gray-500 border-b-2 border-transparent'}`;
-      document.getElementById('tabRegPersonalBtn').className = `w-1/4 pb-2.5 ${tab === 'regPersonal' ? 'text-indigo-400 border-b-2 border-indigo-500 font-bold' : 'text-gray-500 border-b-2 border-transparent'}`;
-      document.getElementById('tabManijaBtn').className = `w-1/4 pb-2.5 ${tab === 'manija' ? 'text-pink-400 border-b-2 border-pink-500 font-bold' : 'text-gray-500 border-b-2 border-transparent'}`;
-
-      if (tab === 'regPersonal') actualizarSelectBoliches();
-      if (tab === 'manija') actualizarSelectBolichesManija();
-    }
-
-    function actualizarSelectBoliches() {
-      const select = document.getElementById('regPersonalBolicheSelect');
-      const bolichesAprobados = [...new Set(usuarios.filter(u => u.aprobado && u.nombreBoliche && u.username !== 'panda').map(u => u.nombreBoliche))];
-
-      select.innerHTML = '';
-      if (bolichesAprobados.length === 0) {
-        select.innerHTML = '<option value="">No hay Boliches habilitados aún</option>';
-        return;
-      }
-
-      bolichesAprobados.forEach(b => {
-        select.innerHTML += `<option value="${b}">${b}</option>`;
-      });
-    }
-
-    function actualizarSelectBolichesManija() {
-      const select = document.getElementById('manijaBolicheSelect');
-      if (!select) return;
-      const bolichesAprobados = [...new Set(usuarios.filter(u => u.aprobado && u.nombreBoliche && u.username !== 'panda').map(u => u.nombreBoliche))];
-
-      select.innerHTML = '';
-      if (bolichesAprobados.length === 0) {
-        select.innerHTML = '<option value="SOMOSMANIJAS CENTRAL">SomosManijas Eventos</option>';
-        return;
-      }
-
-      bolichesAprobados.forEach(b => {
-        select.innerHTML += `<option value="${b}">${b}</option>`;
-      });
-    }
-
-    function ingresarComoManija() {
-      const bolicheElegido = document.getElementById('manijaBolicheSelect').value || 'Público';
-      usuarioActual = { id: 999, nombre: 'Soy Manija 🪭', username: 'manija', rol: 'Manija (Público)', aprobado: true, isAdmin: false, nombreBoliche: bolicheElegido };
-      verificarSesion();
-    }
-
-    function registrarBoliche(e) {
-      e.preventDefault();
-      const nombreBoliche = document.getElementById('regBolicheNombre').value.trim();
-      const nombre = document.getElementById('regBolicheEncargado').value.trim();
-      const username = document.getElementById('regBolicheUsuario').value.trim().toLowerCase();
-      const tel = document.getElementById('regBolicheTel').value.trim();
-      const pass = document.getElementById('regBolichePassword').value.trim();
-
-      if (usuarios.some(u => u.username === username)) return alert('Nombre de usuario en uso.');
-
-      const nuevo = {
-        id: Date.now(),
-        nombreBoliche,
-        nombre,
-        username,
-        tel,
-        rol: 'Dueño del Boliche / Admin Local',
-        pass,
-        aprobado: false,
-        isAdmin: true
-      };
-
-      usuarios.push(nuevo);
-      db.ref('vortexx_users').set(usuarios);
-
-      alert('⏳ Solicitud de Boliche enviada con éxito. Debe ser habilitado por Panda antes de ingresar.');
-      document.getElementById('registerBolicheForm').reset();
-      cambiarTabAuth('login');
-    }
-
-    function registrarPersonal(e) {
-      e.preventDefault();
-      const nombreBoliche = document.getElementById('regPersonalBolicheSelect').value;
-      const nombre = document.getElementById('regPersonalNombre').value.trim();
-      const username = document.getElementById('regPersonalUsuario').value.trim().toLowerCase();
-      const tel = document.getElementById('regPersonalTel').value.trim();
-      const rol = document.getElementById('regPersonalRol').value;
-      const pass = document.getElementById('regPersonalPassword').value.trim();
-
-      if (!nombreBoliche) return alert('Debes seleccionar un boliche habilitado.');
-      if (usuarios.some(u => u.username === username)) return alert('Nombre de usuario en uso.');
-
-      const nuevo = {
-        id: Date.now(),
-        nombreBoliche,
-        nombre,
-        username,
-        tel,
-        rol,
-        pass,
-        aprobado: true,
-        isAdmin: false
-      };
-
-      usuarios.push(nuevo);
-      db.ref('vortexx_users').set(usuarios);
-
-      alert('✅ Registro de personal completado. Ya podés iniciar sesión.');
-      document.getElementById('registerPersonalForm').reset();
-      cambiarTabAuth('login');
-    }
-
-    function iniciarSesion(e) {
-      e.preventDefault();
-      const usernameInput = document.getElementById('loginUsuario').value.trim().toLowerCase();
-      const passInput = document.getElementById('loginPassword').value.trim();
-
-      if (usernameInput === 'panda' && (passInput === CLAVE_MAESTRA || passInput === CLAVE_RESETEO_PANDA)) {
-        usuarioActual = PANDA_SUPERADMIN;
-        localStorage.setItem('vortexx_current_user', JSON.stringify(usuarioActual));
-        verificarSesion();
-        return;
-      }
-
-      const user = usuarios.find(u => u.username.toLowerCase() === usernameInput && u.pass === passInput);
-
-      if (!user) return alert('Usuario o contraseña incorrectos.');
-      if (!user.aprobado) return alert('⏳ Tu Boliche/After aún no fue habilitado por Panda.');
-
-      usuarioActual = user;
-      localStorage.setItem('vortexx_current_user', JSON.stringify(usuarioActual));
-      verificarSesion();
-    }
-
-    function cerrarSesion() {
-      usuarioActual = null;
-      localStorage.removeItem('vortexx_current_user');
-      document.getElementById('passwordFeedback').innerHTML = '';
-      verificarSesion();
-    }
-
-    function verificarSesion() {
-      const auth = document.getElementById('authSection');
-      const dash = document.getElementById('appDashboard');
-      const info = document.getElementById('userHeaderInfo');
-      const selectorModo = document.getElementById('selectorModoEvento');
-
-      if (usuarioActual) {
-        auth.classList.add('hidden');
-        dash.classList.remove('hidden');
-        info.classList.remove('hidden');
-        selectorModo.classList.remove('hidden');
-
-        document.getElementById('headerUserName').innerText = usuarioActual.nombre;
-        document.getElementById('headerUserRole').innerText = usuarioActual.rol;
-        document.getElementById('headerBolicheName').innerText = `📍 ${usuarioActual.nombreBoliche || 'General'}`;
-
-        configurarVistasPorRol();
-        renderizarTodo();
-      } else {
-        auth.classList.remove('hidden');
-        dash.classList.add('hidden');
-        info.classList.add('hidden');
-        selectorModo.classList.add('hidden');
-      }
-    }
-
-    function configurarVistasPorRol() {
-      const isPanda = usuarioActual.username === 'panda';
-      const esAdmin = usuarioActual.isAdmin || isPanda;
-      const esRpp = usuarioActual.rol ? usuarioActual.rol.includes('RPP') : false;
-      const esDj = usuarioActual.rol ? usuarioActual.rol.includes('DJ') : false;
-      const esManija = usuarioActual.username === 'manija';
-
-      document.getElementById('btnMiCuenta').classList.toggle('hidden', esManija);
-      document.getElementById('panelSuperAdminPanda').classList.toggle('hidden', !isPanda);
-      document.getElementById('barAdminTools').classList.toggle('hidden', !esAdmin);
-      document.getElementById('panelAdmin').classList.toggle('hidden', !esAdmin);
-      document.getElementById('panelCajaAdmin').classList.toggle('hidden', !esAdmin);
-      document.getElementById('metricasCajaAdmin').classList.toggle('hidden', !esAdmin);
-      document.getElementById('seccionHistorial').classList.toggle('hidden', !esAdmin);
-      document.getElementById('formCargaDj').classList.toggle('hidden', !esAdmin);
-      document.getElementById('btnGuardarUbiBoliche').classList.toggle('hidden', !esAdmin);
-      document.getElementById('btnGuardarUbiAfter').classList.toggle('hidden', !esAdmin);
-
-      document.getElementById('contenedorFormCarga').classList.toggle('hidden', esManija || esDj);
-      document.getElementById('perfilRppSection').classList.toggle('hidden', !esRpp);
-
-      document.getElementById('ubiBoliche').readOnly = !esAdmin;
-      document.getElementById('ubiAfter').readOnly = !esAdmin;
-
-      if (isPanda) renderizarPanelSuperAdminPanda();
-      if (esAdmin) renderizarGestionUsuariosAdmin();
-    }
-
-    function renderizarPanelSuperAdminPanda() {
-      const grid = document.getElementById('gridSolicitudesBoliches');
-      grid.innerHTML = '';
-
-      const locales = usuarios.filter(u => u.username !== 'panda' && u.isAdmin);
-
-      if (locales.length === 0) {
-        grid.innerHTML = `<p class="text-gray-500 italic p-2">No hay Boliches o Afters registrados.</p>`;
-        return;
-      }
-
-      locales.forEach(u => {
-        const div = document.createElement('div');
-        div.className = `p-3 rounded-xl border flex justify-between items-center ${u.aprobado ? 'bg-gray-950/80 border-emerald-800' : 'bg-yellow-950/30 border-yellow-700/80'}`;
-        div.innerHTML = `
-          <div>
-            <strong class="text-white block text-xs">🏛️ ${u.nombreBoliche || 'Sin Nombre'}</strong>
-            <span class="text-gray-300 block text-[11px]">${u.nombre} (@${u.username}) - Tel: ${u.tel || 'S/D'}</span>
-            <span class="text-[10px] font-mono ${u.aprobado ? 'text-emerald-400 font-bold' : 'text-amber-400'}">
-              ${u.aprobado ? '✅ HABILITADO' : '⏳ PENDIENTE DE APROBACIÓN'}
-            </span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <button onclick="toggleEstadoAprobacionBoliche(${u.id})" class="text-[10px] font-bold px-2.5 py-1.5 rounded transition ${u.aprobado ? 'bg-red-950 hover:bg-red-900 text-red-200 border border-red-800' : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow'}">
-              ${u.aprobado ? '🚫 Deshabilitar' : '✅ Habilitar'}
-            </button>
-          </div>
-        `;
-        grid.appendChild(div);
-      });
-    }
-
-    function toggleEstadoAprobacionBoliche(id) {
-      usuarios = usuarios.map(u => u.id === id ? { ...u, aprobado: !u.aprobado } : u);
-      db.ref('vortexx_users').set(usuarios);
-      registrarLog(`Cambió estado de habilitación para Boliche ID #${id}`);
-    }
-
-    function renderizarGestionUsuariosAdmin() {
-      const grid = document.getElementById('listaUsuariosGrid');
-      grid.innerHTML = '';
-
-      const usuariosDelBoliche = usuarios.filter(u => u.username !== 'panda' && u.nombreBoliche === usuarioActual.nombreBoliche);
-
-      usuariosDelBoliche.forEach(u => {
-        const div = document.createElement('div');
-        div.className = 'bg-gray-950 p-3 rounded-xl border border-gray-800 flex justify-between items-center';
-        div.innerHTML = `
-          <div>
-            <strong class="text-white block text-xs">${u.nombre} (@${u.username})</strong>
-            <span class="text-purple-400 block font-mono text-[10px]">${u.rol}</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <button onclick="toggleAdminPermiso(${u.id})" class="text-[10px] font-bold px-2 py-1 rounded transition ${u.isAdmin ? 'bg-purple-900 text-purple-200 border border-purple-600' : 'bg-gray-800 text-gray-400'}">
-              ${u.isAdmin ? '👑 ADMIN ACTIVO' : '🔒 HACER ADMIN'}
-            </button>
-            <button onclick="eliminarUsuario(${u.id})" class="text-red-400 text-xs">✕</button>
-          </div>
-        `;
-        grid.appendChild(div);
-      });
-    }
-
-    function toggleAdminPermiso(id) {
-      usuarios = usuarios.map(u => u.id === id ? { ...u, isAdmin: !u.isAdmin } : u);
-      db.ref('vortexx_users').set(usuarios);
-      registrarLog(`Cambió permisos de administración para ID usuario #${id}`);
-    }
-
-    function eliminarUsuario(id) {
-      if (!confirm('¿Eliminar este usuario?')) return;
-      usuarios = usuarios.filter(u => u.id !== id);
-      db.ref('vortexx_users').set(usuarios);
-      registrarLog(`Eliminó al usuario ID #${id}`);
-    }
-
-    function solicitarClaveAccion(tipo) {
-      const pass = prompt('🔐 Ingresá la Contraseña Maestra para autorizar esta acción:');
-      if (pass !== CLAVE_MAESTRA) {
-        return alert('❌ Contraseña Maestra incorrecta. Acción cancelada.');
-      }
-
-      if (tipo === 'demo') {
-        cargarDatosDemo();
-      } else if (tipo === 'borrar') {
-        formatearTodo();
-      }
-    }
-
-    function cargarDatosDemo() {
-      const rppsDemo = [
-        { id: 101, nombreBoliche: 'Club XL', nombre: 'Lucas RRPP', username: 'lucas', tel: '5493515551111', rol: 'RPP / Promotor', pass: '123', aprobado: true, isAdmin: false },
-        { id: 102, nombreBoliche: 'Club XL', nombre: 'Sofía Eventos', username: 'sofia', tel: '5493515552222', rol: 'RPP / Promotor', pass: '123', aprobado: true, isAdmin: false }
-      ];
-      usuarios = [PANDA_SUPERADMIN, ...rppsDemo];
-
-      cajaPrecios = { boliche: 8000, after: 5000, pagoCabeza: 1000, sePagaRPP: true, sePagaDJ: true };
-      ubicaciones = { boliche: 'Club SomosManijas', after: 'After SomosManijas Secret' };
-
-      djs = [
-        { id: 1, nombre: 'DJ SoundSystem', evento: 'boliche', inicio: '', fin: '', monto: 120000, pagado: true },
-        { id: 2, nombre: 'Alejo Fort', evento: 'boliche', inicio: '02:00', fin: '03:30', monto: 80000, pagado: true },
-        { id: 3, nombre: 'adelqui', evento: 'after', inicio: '05:30', fin: '08:00', monto: 85000, pagado: true }
-      ];
-
-      invitados = [
-        { id: 1, nombre: 'Martín Fernández', documento: '38123456', telefono: '549351555111', rpp: 'Lucas RRPP (RPP / Promotor)', tipoLista: 'Free', evento: 'boliche', cumpleanero: '', esCumpleanero: false, monto: 0, ingresado: false, ingresadoPorRpp: '', fecha: hoyStr },
-        { id: 2, nombre: 'Martín Fernández', documento: '38123456', telefono: '549351555111', rpp: 'Sofía Eventos (RPP / Promotor)', tipoLista: 'Free', evento: 'boliche', cumpleanero: '', esCumpleanero: false, monto: 0, ingresado: false, ingresadoPorRpp: '', fecha: hoyStr },
-        { id: 3, nombre: 'Camila Rossi', documento: '40987654', telefono: '549351555222', rpp: 'Lucas RRPP (RPP / Promotor)', tipoLista: 'Cumpleaños', evento: 'boliche', cumpleanero: 'Camila Rossi', esCumpleanero: true, monto: 0, ingresado: true, ingresadoPorRpp: 'Lucas RRPP (RPP / Promotor)', fecha: hoyStr },
-        { id: 4, nombre: 'Lucas Gomez (After)', documento: '41111222', telefono: '549351555999', rpp: 'Sofía Eventos (RPP / Promotor)', tipoLista: 'Entrada Paga', evento: 'after', cumpleanero: '', esCumpleanero: false, monto: 5000, ingresado: false, ingresadoPorRpp: '', fecha: hoyStr }
-      ];
-
-      db.ref('vortexx_users').set(usuarios);
-      db.ref('vortexx_precios').set(cajaPrecios);
-      db.ref('vortexx_ubis').set(ubicaciones);
-      db.ref('vortexx_djs').set(djs);
-      db.ref('vortexx_guests').set(invitados);
-
-      registrarLog('⚡ Cargó los datos DEMO de ejemplo.');
-      alert('⚡ Datos DEMO cargados correctamente.');
-    }
-
-    function formatearTodo() {
-      usuarios = [PANDA_SUPERADMIN];
-      invitados = [];
-      djs = [];
-      ubicaciones = { boliche: '', after: '' };
-      cajaPrecios = { boliche: 0, after: 0, pagoCabeza: 0, sePagaRPP: false, sePagaDJ: false };
-      historialLogs = [];
-
-      db.ref('vortexx_users').set(usuarios);
-      db.ref('vortexx_guests').set(invitados);
-      db.ref('vortexx_djs').set(djs);
-      db.ref('vortexx_ubis').set(ubicaciones);
-      db.ref('vortexx_precios').set(cajaPrecios);
-      db.ref('vortexx_logs').set(historialLogs);
-
-      alert('🧹 Sistema formateado a cero.');
-    }
-
-    function guardarPrecios() {
-      cajaPrecios.boliche = parseFloat(document.getElementById('precioBoliche').value) || 0;
-      cajaPrecios.after = parseFloat(document.getElementById('precioAfter').value) || 0;
-      cajaPrecios.pagoCabeza = parseFloat(document.getElementById('pagoPorCabeza').value) || 0;
-      cajaPrecios.sePagaRPP = document.getElementById('sePagaRPP').checked;
-      cajaPrecios.sePagaDJ = document.getElementById('sePagaDJ').checked;
-      db.ref('vortexx_precios').set(cajaPrecios);
-      registrarLog('Actualizó configuración de precios de Caja.');
-    }
-
-    function agregarDJ(e) {
-      e.preventDefault();
-      const nombreDj = document.getElementById('djNombre').value.trim();
-      const nuevo = {
-        id: Date.now(),
-        nombre: nombreDj,
-        tel: document.getElementById('djTel').value.trim(),
-        evento: modoEventoActual,
-        inicio: document.getElementById('djInicio').value,
-        fin: document.getElementById('djFin').value,
-        monto: parseFloat(document.getElementById('djMonto').value) || 0,
-        pagado: false
-      };
-      djs.push(nuevo);
-      db.ref('vortexx_djs').set(djs);
-      registrarLog(`Agregó al DJ "${nombreDj}" al Lineup del ${modoEventoActual.toUpperCase()}.`);
-      document.getElementById('djNombre').value = '';
-      document.getElementById('djTel').value = '';
-      document.getElementById('djInicio').value = '';
-      document.getElementById('djFin').value = '';
-      document.getElementById('djMonto').value = '';
-    }
-
-    function renderizarDJs() {
-      const roadmap = document.getElementById('roadmapDjs');
-      roadmap.innerHTML = '';
-
-      const djsFiltrados = djs.filter(d => (!d.evento || d.evento === modoEventoActual));
-
-      const djsOrdenados = [...djsFiltrados].sort((a, b) => {
-        if (a.inicio && b.inicio) return a.inicio.localeCompare(b.inicio);
-        if (a.inicio && !b.inicio) return -1;
-        if (!a.inicio && b.inicio) return 1;
-        return a.nombre.localeCompare(b.nombre);
-      });
-
-      if (djsOrdenados.length === 0) {
-        roadmap.innerHTML = `<p class="text-xs text-gray-500 italic">No hay DJs cargados para el ${modoEventoActual.toUpperCase()}.</p>`;
-        return;
-      }
-
-      djsOrdenados.forEach(d => {
-        const div = document.createElement('div');
-        div.className = 'bg-gray-950 p-3 rounded-xl border border-gray-800 flex justify-between items-center';
-
-        let horaBadge = '';
-        if (d.inicio && d.fin) {
-          horaBadge = `<span class="text-xs font-mono font-bold bg-purple-950 text-purple-300 border border-purple-800 px-2.5 py-1 rounded">⏱️ ${d.inicio} hs - ${d.fin} hs</span>`;
-        } else {
-          horaBadge = `<span class="text-xs font-mono bg-gray-900 text-gray-500 border border-gray-800 px-2.5 py-1 rounded">⏱️ --:-- hs - --:-- hs (Horario a confirmar)</span>`;
-        }
-
-        div.innerHTML = `
-          <div class="flex items-center gap-3">
-            ${horaBadge}
-            <strong class="text-white text-xs block">${d.nombre}</strong>
-          </div>
-        `;
-        roadmap.appendChild(div);
-      });
-    }
-
-    function guardarUbicacion(tipo) {
-      const val = tipo === 'boliche' ? document.getElementById('ubiBoliche').value : document.getElementById('ubiAfter').value;
-      ubicaciones[tipo] = val.trim();
-      db.ref('vortexx_ubis').set(ubicaciones);
-      registrarLog(`Actualizó ubicación de ${tipo.toUpperCase()}`);
-    }
-
-    function renderizarUbicaciones() {
-      document.getElementById('ubiBoliche').value = ubicaciones.boliche || '';
-      document.getElementById('ubiAfter').value = ubicaciones.after || '';
-
-      const btnB = document.getElementById('btnBoliche');
-      const btnA = document.getElementById('btnAfter');
-      const boxBlindado = document.getElementById('afterUbiBoxBlindado');
-      const bloqueoManija = document.getElementById('bloqueoAfterManija');
-
-      const esManija = usuarioActual && usuarioActual.username === 'manija';
-
-      if (ubicaciones.boliche) {
-        btnB.href = ubicaciones.boliche.startsWith('http') ? ubicaciones.boliche : `https://maps.google.com/?q=${encodeURIComponent(ubicaciones.boliche)}`;
-        btnB.classList.remove('hidden');
-      } else btnB.classList.add('hidden');
-
-      if (esManija) {
-        boxBlindado.classList.add('hidden');
-        bloqueoManija.classList.remove('hidden');
-      } else {
-        bloqueoManija.classList.add('hidden');
-        boxBlindado.classList.remove('hidden');
-
-        if (ubicaciones.after) {
-          btnA.href = ubicaciones.after.startsWith('http') ? ubicaciones.after : `https://maps.google.com/?q=${encodeURIComponent(ubicaciones.after)}`;
-          btnA.classList.remove('hidden');
-        } else btnA.classList.add('hidden');
-      }
-    }
-
-    function verificarDniVerMapaAfter() {
-      const dni = document.getElementById('inputDniVerificarAfter').value.trim();
-      if (!dni) return alert('Por favor ingresá tu DNI.');
-
-      const estaAnotado = invitados.some(i => i.documento === dni && i.evento === 'after');
-
-      if (estaAnotado && ubicaciones.after) {
-        const link = ubicaciones.after.startsWith('http') ? ubicaciones.after : `https://maps.google.com/?q=${encodeURIComponent(ubicaciones.after)}`;
-        window.open(link, '_blank');
-      } else if (!estaAnotado) {
-        alert('⚠️ Tu DNI no figura en la lista del After de hoy. Solicitá a tu RPP que te anote para poder ver la ubicación.');
-      } else {
-        alert('⏳ La ubicación del After aún no ha sido cargada por la organización.');
-      }
-    }
-
-    function toggleOpcionesLista() {
-      const tipo = document.getElementById('tipoLista').value;
-      document.getElementById('cumpleContainer').classList.toggle('hidden', tipo !== 'Cumpleaños');
-    }
-
-    function guardarInvitado(e) {
-      e.preventDefault();
-      if (!usuarioActual) return;
-
-      const editId = document.getElementById('editGuestId').value;
-      const nom = document.getElementById('nombre').value.trim();
-      const tipoLista = document.getElementById('tipoLista').value;
-      const monto = tipoLista === 'Entrada Paga' ? (modoEventoActual === 'boliche' ? cajaPrecios.boliche : cajaPrecios.after) : 0;
-      const cumpleanero = tipoLista === 'Cumpleaños' ? document.getElementById('cumpleanero').value.trim() : '';
-      const esCumpleanero = tipoLista === 'Cumpleaños' ? document.getElementById('esElCumpleanero').checked : false;
-
-      if (editId) {
-        invitados = invitados.map(i => i.id == editId ? {
-          ...i,
-          nombre: nom,
-          documento: document.getElementById('documento').value.trim(),
-          telefono: document.getElementById('telefono').value.trim(),
-          tipoLista: tipoLista,
-          cumpleanero: cumpleanero,
-          esCumpleanero: esCumpleanero,
-          monto: monto
-        } : i);
-        registrarLog(`Editó los datos del invitado "${nom}" (${modoEventoActual.toUpperCase()})`);
-      } else {
-        const nuevo = {
-          id: Date.now(),
-          nombre: nom,
-          documento: document.getElementById('documento').value.trim(),
-          telefono: document.getElementById('telefono').value.trim(),
-          rpp: `${usuarioActual.nombre} (${usuarioActual.rol})`,
-          tipoLista: tipoLista,
-          evento: modoEventoActual,
-          cumpleanero: cumpleanero,
-          esCumpleanero: esCumpleanero,
-          monto: monto,
-          ingresado: false,
-          ingresadoPorRpp: '',
-          fecha: hoyStr
-        };
-        invitados.push(nuevo);
-        registrarLog(`Anotó a "${nom}" en la lista de ${usuarioActual.nombre} (${modoEventoActual.toUpperCase()})`);
-      }
-
-      db.ref('vortexx_guests').set(invitados);
-      cancelarEdicion();
-    }
-
-    function editarInvitado(id) {
-      const item = invitados.find(i => i.id === id);
-      if (!item) return;
-
-      document.getElementById('editGuestId').value = item.id;
-      document.getElementById('nombre').value = item.nombre;
-      document.getElementById('documento').value = item.documento;
-      document.getElementById('telefono').value = item.telefono || '';
-      document.getElementById('tipoLista').value = item.tipoLista;
-      document.getElementById('cumpleanero').value = item.cumpleanero || '';
-      document.getElementById('esElCumpleanero').checked = item.esCumpleanero || false;
-
-      toggleOpcionesLista();
-      document.getElementById('tituloFormInvitado').innerText = `✏️ Editar Datos de Invitado (${modoEventoActual.toUpperCase()})`;
-      document.getElementById('btnSubmitGuest').innerText = 'Guardar Cambios';
-      document.getElementById('btnCancelarEdicion').classList.remove('hidden');
-    }
-
-    function cancelarEdicion() {
-      document.getElementById('guestForm').reset();
-      document.getElementById('editGuestId').value = '';
-      document.getElementById('tituloFormInvitado').innerText = `➕ Anotar Invitado a la Lista (${modoEventoActual.toUpperCase()})`;
-      document.getElementById('btnSubmitGuest').innerText = 'Guardar en Lista';
-      document.getElementById('btnCancelarEdicion').classList.add('hidden');
-      document.getElementById('cumpleContainer').classList.add('hidden');
-    }
-
-    function solicitarIngreso(items) {
-      if (usuarioActual.username === 'manija') return;
-
-      if (items.length === 1) {
-        ejecutarIngresoRPP(items[0].id, items[0].rpp);
-      } else {
-        document.getElementById('nombrePersonaConflicto').innerText = items[0].nombre;
-        const container = document.getElementById('opcionesRppConflicto');
-        container.innerHTML = '';
-
-        items.forEach(it => {
-          const btn = document.createElement('button');
-          btn.className = 'w-full bg-purple-950 hover:bg-purple-900 border border-purple-700 text-purple-200 py-2 px-3 rounded-xl text-xs font-bold transition flex justify-between items-center';
-          btn.innerHTML = `<span>Lista de: <strong>${it.rpp}</strong></span> <span>Elegir ✅</span>`;
-          btn.onclick = () => {
-            ejecutarIngresoRPP(it.id, it.rpp);
-            cerrarModalConflicto();
-          };
-          container.appendChild(btn);
-        });
-
-        document.getElementById('modalConflicto').classList.remove('hidden');
-      }
-    }
-
-    function ejecutarIngresoRPP(idGanador, rppGanador) {
-      const itemOriginal = invitados.find(i => i.id === idGanador);
-      const dniKey = itemOriginal.documento;
-
-      invitados = invitados.map(i => {
-        if (i.documento === dniKey && (i.evento || 'boliche') === modoEventoActual) {
-          return { ...i, ingresado: true, ingresadoPorRpp: rppGanador };
-        }
-        return i;
-      });
-
-      db.ref('vortexx_guests').set(invitados);
-      registrarLog(`Marcó ingreso de "${itemOriginal.nombre}" a través de la lista de ${rppGanador} (${modoEventoActual.toUpperCase()})`);
-    }
-
-    function cerrarModalConflicto() {
-      document.getElementById('modalConflicto').classList.add('hidden');
-    }
-
-    function renderizarTodo() {
-      document.getElementById('precioBoliche').value = cajaPrecios.boliche || '';
-      document.getElementById('precioAfter').value = cajaPrecios.after || '';
-      document.getElementById('pagoPorCabeza').value = cajaPrecios.pagoCabeza || '';
-      document.getElementById('sePagaRPP').checked = cajaPrecios.sePagaRPP;
-      document.getElementById('sePagaDJ').checked = cajaPrecios.sePagaDJ;
-
-      renderizarUbicaciones();
-      renderizarHistorialLogs();
-      renderizarDJs();
-      renderizarFiltroCreadores();
-      renderizarRendimientoRPP();
-      filtrarInvitados();
-    }
-
-    function renderizarFiltroCreadores() {
-      const select = document.getElementById('filtroRppTabla');
-      const invitadosFiltrados = invitados.filter(i => (!i.evento || i.evento === modoEventoActual));
-      const creadoresUnicos = [...new Set(invitadosFiltrados.map(i => i.rpp))];
-      select.innerHTML = '<option value="TODOS">Ver Todas las Listas</option>';
-      creadoresUnicos.forEach(c => select.innerHTML += `<option value="${c}">${c}</option>`);
-    }
-
-    function renderizarRendimientoRPP() {
-      if (!usuarioActual || !usuarioActual.rol.includes('RPP')) return;
-
-      const miNombre = `${usuarioActual.nombre} (${usuarioActual.rol})`;
-      const misAnotados = invitados.filter(i => i.rpp === miNombre && (!i.evento || i.evento === modoEventoActual));
-      const misIngresadosEfectivos = invitados.filter(i => i.ingresadoPorRpp === miNombre && (!i.evento || i.evento === modoEventoActual));
-
-      document.getElementById('rppAnotados').innerText = misAnotados.length;
-      document.getElementById('rppIngresados').innerText = misIngresadosEfectivos.length;
-      document.getElementById('rppPendientes').innerText = misAnotados.length - misAnotados.filter(i => i.ingresado).length;
-
-      const boxComision = document.getElementById('rppComisionBox');
-      if (cajaPrecios.sePagaRPP) {
-        boxComision.classList.remove('hidden');
-        document.getElementById('rppComision').innerText = `$${(misIngresadosEfectivos.length * (cajaPrecios.pagoCabeza || 0)).toLocaleString('es-AR')}`;
-      } else {
-        boxComision.classList.add('hidden');
-      }
-    }
-
-    function filtrarInvitados() {
-      const query = document.getElementById('searchInput').value.toLowerCase().trim();
-      const rppFiltro = document.getElementById('filtroRppTabla').value;
-      const desde = document.getElementById('fechaDesde').value;
-      const hasta = document.getElementById('fechaHasta').value;
-
-      let resultado = invitados.filter(i => (!i.evento || i.evento === modoEventoActual));
-
-      if (rppFiltro && rppFiltro !== 'TODOS') resultado = resultado.filter(i => i.rpp === rppFiltro);
-
-      if (desde) {
-        resultado = resultado.filter(i => i.fecha && i.fecha >= desde);
-      }
-      if (hasta) {
-        resultado = resultado.filter(i => i.fecha && i.fecha <= hasta);
-      }
-
-      if (query) {
-        resultado = resultado.filter(i =>
-          i.nombre.toLowerCase().includes(query) ||
-          i.documento.toLowerCase().includes(query) ||
-          (i.cumpleanero && i.cumpleanero.toLowerCase().includes(query))
-        );
-      }
-
-      renderizarTablaAgrupada(resultado);
-      actualizarEstadisticasAdmin(resultado);
-    }
-
-    function renderizarTablaAgrupada(lista) {
-      const tbody = document.getElementById('guestList');
-      tbody.innerHTML = '';
-
-      const isManija = usuarioActual && usuarioActual.username === 'manija';
-
-      const grupos = {};
-      lista.forEach(item => {
-        const key = item.documento || item.nombre.toLowerCase();
-        if (!grupos[key]) grupos[key] = [];
-        grupos[key].push(item);
-      });
-
-      if (Object.keys(grupos).length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-500 italic">No hay personas anotadas para ${modoEventoActual.toUpperCase()}.</td></tr>`;
-        return;
-      }
-
-      Object.keys(grupos).forEach(key => {
-        const items = grupos[key];
-        const prim = items[0];
-        const tr = document.createElement('tr');
-
-        const esIngresado = items.some(i => i.ingresado);
-        tr.className = esIngresado ? 'line-through-fade transition' : 'hover:bg-gray-800/40 transition';
-
-        let rppBadges = items.map(i => {
-          if (esIngresado && i.ingresadoPorRpp === i.rpp) {
-            return `<span class="inline-block bg-emerald-950 text-emerald-300 border border-emerald-800 text-[10px] px-1.5 py-0.5 rounded font-bold">✅ ${i.rpp}</span>`;
-          } else if (esIngresado) {
-            return `<span class="inline-block bg-gray-900 text-gray-500 text-[10px] px-1.5 py-0.5 rounded">⚠️ ${i.rpp} (Entró por otro RPP)</span>`;
-          }
-          return `<span class="inline-block bg-purple-950 text-purple-300 text-[10px] px-1.5 py-0.5 rounded">${i.rpp}</span>`;
-        }).join(' ');
-
-        let alertDuplicado = items.length > 1 ? `<span class="block text-[9px] text-yellow-400 font-bold mt-1">⚔️ Duplicado en ${items.length} RPPs</span>` : '';
-
-        let detalleTipo = `<span class="font-medium text-gray-200">${prim.tipoLista}</span>`;
-        if (prim.tipoLista === 'Cumpleaños') {
-          if (prim.esCumpleanero) {
-            detalleTipo += `<span class="block text-amber-300 font-black text-[10px]">🎧 CUMPLEAÑERO/A</span>`;
-          } else if (prim.cumpleanero) {
-            detalleTipo += `<span class="block text-pink-400 text-[10px]">🎂 Cumple de: <strong>${prim.cumpleanero}</strong></span>`;
-          }
-        }
-
-        let btnAccion = '';
-        if (isManija) {
-          btnAccion = `<span class="text-xs text-gray-500">Solo lectura</span>`;
-        } else if (esIngresado) {
-          btnAccion = `<span class="px-2 py-1 rounded bg-gray-800 text-emerald-400 text-xs font-bold">✅ DENTRO</span>`;
-        } else {
-          btnAccion = `
-            <div class="flex items-center justify-center gap-2">
-              <button onclick='solicitarIngreso(${JSON.stringify(items)})' class="px-3 py-1 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow">
-                ✅ Marcar
-              </button>
-              <button onclick="editarInvitado(${prim.id})" class="text-xs bg-gray-800 hover:bg-gray-700 text-purple-300 px-2 py-1 rounded">
-                ✏️
-              </button>
-            </div>
-          `;
-        }
-
-        tr.innerHTML = `
-          <td class="p-3">
-            <span class="px-2 py-0.5 text-[10px] font-bold rounded-full ${esIngresado ? 'bg-emerald-950 text-emerald-300' : 'bg-amber-950 text-amber-300'}">
-              ${esIngresado ? 'INGRESÓ' : 'PENDIENTE'}
-            </span>
-          </td>
-          <td class="p-3">
-            <strong class="text-white block">${prim.nombre}</strong>
-            <span class="text-xs text-gray-400">${prim.documento}</span>
-          </td>
-          <td class="p-3 text-xs">${rppBadges} ${alertDuplicado}</td>
-          <td class="p-3 text-xs">${detalleTipo}</td>
-          <td class="p-3 text-center">${btnAccion}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function actualizarEstadisticasAdmin(listaFiltrada) {
-      if (!usuarioActual || (!usuarioActual.isAdmin && usuarioActual.username !== 'panda')) return;
-
-      const unicos = [...new Set(listaFiltrada.map(i => i.documento))];
-      const ingresaronUnicos = unicos.filter(doc => listaFiltrada.some(i => i.documento === doc && i.ingresado));
-
-      let recaudado = 0;
-      listaFiltrada.filter(i => i.ingresado).forEach(i => { if (i.monto) recaudado += i.monto; });
-
-      let djsFiltrados = djs.filter(d => (!d.evento || d.evento === modoEventoActual));
-      let totalGastosDjs = 0;
-      djsFiltrados.forEach(d => totalGastosDjs += d.monto);
-
-      let totalComisionesRPP = cajaPrecios.sePagaRPP ? (ingresaronUnicos.length * (cajaPrecios.pagoCabeza || 0)) : 0;
-      const balance = recaudado - (totalGastosDjs + totalComisionesRPP);
-
-      document.getElementById('statTotal').innerText = unicos.length;
-      document.getElementById('statIngresaron').innerText = ingresaronUnicos.length;
-      document.getElementById('statRecaudado').innerText = `$${recaudado.toLocaleString('es-AR')}`;
-      document.getElementById('statBalance').innerText = `$${balance.toLocaleString('es-AR')}`;
-    }
-
-    suscribirFirebase();
-    verificarSesion();
-</script>
+<script src="app.js"></script>
 </body>
 </html>

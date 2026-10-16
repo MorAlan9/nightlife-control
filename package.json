@@ -1,0 +1,17 @@
+{
+  "name": "nightlife-control",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Gestor de listas para boliches y afters (SomosManijas)",
+  "scripts": {
+    "test": "node scripts/verificar-referencias.js && node --test tests/app.test.js",
+    "test:rules": "node scripts/test-rules.js",
+    "build:rules": "node scripts/build-rules.js"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^3.0.4",
+    "firebase": "^10.14.1",
+    "firebase-tools": "^13.35.1",
+    "jsdom": "^26.1.0"
+  }
+}

@@ -1,0 +1,316 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "superadmins": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid"
+      }
+    },
+    "usuarios": {
+      "$uid": {
+        ".read": "(auth != null && auth.uid === $uid) || (auth != null && root.child('superadmins').child(auth.uid).val() === true)",
+        ".write": "(auth != null && auth.uid === $uid && !data.exists()) || (auth != null && root.child('superadmins').child(auth.uid).val() === true)",
+        ".validate": "newData.hasChildren(['bid'])",
+        "bid": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 60"
+        },
+        "$otro": {
+          ".validate": false
+        }
+      }
+    },
+    "publicos": {
+      ".read": true,
+      "$bid": {
+        ".write": "(auth != null && root.child('superadmins').child(auth.uid).val() === true)",
+        ".validate": "newData.hasChildren(['nombre'])",
+        "nombre": {
+          ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 80"
+        },
+        "eventoActivo": {
+          ".write": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true))",
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 60"
+        },
+        "ubiBoliche": {
+          ".write": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true))",
+          ".validate": "newData.isString() && newData.val().length >= 0 && newData.val().length <= 300"
+        },
+        "$otro": {
+          ".validate": false
+        }
+      }
+    },
+    "boliches": {
+      ".read": "(auth != null && root.child('superadmins').child(auth.uid).val() === true)",
+      "$bid": {
+        ".read": "auth != null && root.child('staff').child($bid).child(auth.uid).exists()",
+        ".write": "(auth != null && root.child('superadmins').child(auth.uid).val() === true) || (auth != null && !data.exists() && newData.child('aprobado').val() === false && newData.child('creadoPor').val() === auth.uid)",
+        ".validate": "newData.hasChildren(['nombre', 'aprobado', 'creadoPor'])",
+        "nombre": {
+          ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 80"
+        },
+        "aprobado": {
+          ".validate": "newData.isBoolean()"
+        },
+        "creadoPor": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 128"
+        },
+        "encargado": {
+          ".validate": "newData.isString() && newData.val().length >= 0 && newData.val().length <= 80"
+        },
+        "tel": {
+          ".validate": "newData.isString() && newData.val().length >= 0 && newData.val().length <= 30"
+        },
+        "creado": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 100000000000000"
+        },
+        "$otro": {
+          ".validate": false
+        }
+      }
+    },
+    "staff": {
+      "$bid": {
+        ".read": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true))",
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "(auth != null && root.child('superadmins').child(auth.uid).val() === true) || (auth != null && auth.uid !== $uid && ((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true))) || (auth != null && auth.uid === $uid && !data.exists() && root.child('publicos').child($bid).child('nombre').exists() && newData.child('isAdmin').val() === false && newData.child('aprobado').val() === false && (newData.child('rol').val() === 'RPP / Promotor' || newData.child('rol').val() === 'DJ / Artista' || newData.child('rol').val() === 'Control de Puerta') && auth.token.email === newData.child('username').val() + '@usuarios.somosmanijas.app') || (auth != null && auth.uid === $uid && !data.exists() && !root.child('boliches').child($bid).exists() && newData.parent().parent().parent().child('boliches').child($bid).child('creadoPor').val() === auth.uid && newData.child('isAdmin').val() === true && newData.child('aprobado').val() === true && newData.child('rol').val() === 'Dueño del Boliche / Admin Local' && auth.token.email === newData.child('username').val() + '@usuarios.somosmanijas.app') || (auth != null && auth.uid === $uid && data.exists() && newData.exists() && newData.child('isAdmin').val() === data.child('isAdmin').val() && newData.child('aprobado').val() === data.child('aprobado').val() && newData.child('rol').val() === data.child('rol').val() && newData.child('username').val() === data.child('username').val())",
+          ".validate": "newData.hasChildren(['nombre', 'username', 'rol', 'isAdmin', 'aprobado'])",
+          "nombre": {
+            ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 80"
+          },
+          "username": {
+            ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9._-]{3,30}$/)"
+          },
+          "tel": {
+            ".validate": "newData.isString() && newData.val().length >= 0 && newData.val().length <= 30"
+          },
+          "rol": {
+            ".validate": "newData.val() === 'Dueño del Boliche / Admin Local' || newData.val() === 'RPP / Promotor' || newData.val() === 'DJ / Artista' || newData.val() === 'Control de Puerta'"
+          },
+          "isAdmin": {
+            ".validate": "newData.isBoolean()"
+          },
+          "aprobado": {
+            ".validate": "newData.isBoolean()"
+          },
+          "$otro": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "eventos": {
+      "$bid": {
+        ".read": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || (auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true))",
+        "$eid": {
+          ".write": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true))",
+          ".validate": "newData.hasChildren(['nombre', 'fecha'])",
+          "nombre": {
+            ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 80"
+          },
+          "fecha": {
+            ".validate": "newData.isString() && newData.val().matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/)"
+          },
+          "precioBoliche": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000000"
+          },
+          "precioAfter": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000000"
+          },
+          "pagoCabeza": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000000"
+          },
+          "sePagaRPP": {
+            ".validate": "newData.isBoolean()"
+          },
+          "sePagaDJ": {
+            ".validate": "newData.isBoolean()"
+          },
+          "ubiBoliche": {
+            ".validate": "newData.isString() && newData.val().length >= 0 && newData.val().length <= 300"
+          },
+          "ubiAfter": {
+            ".validate": "newData.isString() && newData.val().length >= 0 && newData.val().length <= 300"
+          },
+          "creado": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 100000000000000"
+          },
+          "$otro": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "invitados": {
+      "$bid": {
+        "$eid": {
+          ".read": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || (auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true))",
+          "$gid": {
+            ".write": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true)) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && ( (!data.exists() && root.child('staff').child($bid).child(auth.uid).child('rol').val() !== 'DJ / Artista' && newData.child('rppUid').val() === auth.uid) || (data.exists() && data.child('rppUid').val() === auth.uid && (!newData.exists() || newData.child('rppUid').val() === auth.uid) && !root.child('ingresos').child($bid).child($eid).child(data.child('modo').val() + '_' + data.child('dni').val()).exists())))",
+            ".validate": "newData.hasChildren(['nombre', 'documento', 'dni', 'rppUid', 'rppNombre', 'tipoLista', 'modo', 'ts'])",
+            "nombre": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 100"
+            },
+            "documento": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 20"
+            },
+            "dni": {
+              ".validate": "newData.isString() && newData.val().matches(/^[0-9]{5,12}$/)"
+            },
+            "telefono": {
+              ".validate": "newData.isString() && newData.val().length >= 0 && newData.val().length <= 30"
+            },
+            "rppUid": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 128"
+            },
+            "rppNombre": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 100"
+            },
+            "tipoLista": {
+              ".validate": "newData.val() === 'Free' || newData.val() === 'Cumpleaños' || newData.val() === 'Entrada Paga'"
+            },
+            "modo": {
+              ".validate": "newData.val() === 'boliche' || newData.val() === 'after'"
+            },
+            "cumpleanero": {
+              ".validate": "newData.isString() && newData.val().length >= 0 && newData.val().length <= 100"
+            },
+            "esCumpleanero": {
+              ".validate": "newData.isBoolean()"
+            },
+            "monto": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000000"
+            },
+            "ts": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 100000000000000"
+            },
+            "$otro": {
+              ".validate": false
+            }
+          }
+        }
+      }
+    },
+    "ingresos": {
+      "$bid": {
+        "$eid": {
+          ".read": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || (auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true))",
+          "$key": {
+            ".write": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true)) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('rol').val() !== 'DJ / Artista' && !data.exists() && newData.child('porUid').val() === auth.uid)",
+            ".validate": "$key.matches(/^(boliche|after)_[0-9]{5,12}$/) && newData.hasChildren(['rppUid', 'rppNombre', 'porUid', 'porNombre', 'monto', 'ts'])",
+            "rppUid": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 128"
+            },
+            "rppNombre": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 100"
+            },
+            "porUid": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 128"
+            },
+            "porNombre": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 100"
+            },
+            "monto": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000000"
+            },
+            "ts": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 100000000000000"
+            },
+            "$otro": {
+              ".validate": false
+            }
+          }
+        }
+      }
+    },
+    "djs": {
+      "$bid": {
+        "$eid": {
+          ".read": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || (auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true))",
+          "$did": {
+            ".write": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true))",
+            ".validate": "newData.hasChildren(['nombre', 'modo'])",
+            "nombre": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 80"
+            },
+            "tel": {
+              ".validate": "newData.isString() && newData.val().length >= 0 && newData.val().length <= 30"
+            },
+            "modo": {
+              ".validate": "newData.val() === 'boliche' || newData.val() === 'after'"
+            },
+            "inicio": {
+              ".validate": "newData.isString() && newData.val().length >= 0 && newData.val().length <= 5"
+            },
+            "fin": {
+              ".validate": "newData.isString() && newData.val().length >= 0 && newData.val().length <= 5"
+            },
+            "monto": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000000"
+            },
+            "pagado": {
+              ".validate": "newData.isBoolean()"
+            },
+            "$otro": {
+              ".validate": false
+            }
+          }
+        }
+      }
+    },
+    "logs": {
+      "$bid": {
+        "$eid": {
+          ".read": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true))",
+          "$lid": {
+            ".write": "(auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && !data.exists() && newData.child('uid').val() === auth.uid",
+            ".validate": "newData.hasChildren(['uid', 'texto', 'ts'])",
+            "uid": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 128"
+            },
+            "texto": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 400"
+            },
+            "ts": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 100000000000000"
+            },
+            "$otro": {
+              ".validate": false
+            }
+          }
+        }
+      }
+    },
+    "acceso": {
+      "$bid": {
+        "$eid": {
+          "$k": {
+            ".read": true,
+            ".write": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || (auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true))",
+            ".validate": "$k.matches(/^(boliche|after)_[0-9]{5,12}$/) && newData.hasChildren(['nombre', 'modo', 'tipoLista'])",
+            "nombre": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 100"
+            },
+            "modo": {
+              ".validate": "newData.val() === 'boliche' || newData.val() === 'after'"
+            },
+            "tipoLista": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 30"
+            },
+            "rpp": {
+              ".validate": "newData.isString() && newData.val().length >= 0 && newData.val().length <= 100"
+            },
+            "mapa": {
+              ".validate": "newData.isString() && newData.val().length >= 0 && newData.val().length <= 300"
+            },
+            "$otro": {
+              ".validate": false
+            }
+          }
+        }
+      }
+    }
+  }
+}

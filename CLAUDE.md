@@ -12,3 +12,13 @@
 ## Este repo
 
 Proyecto público (HTML/JS). Sin datos comerciales.
+
+### Notas técnicas
+- Archivos: `index.html` (pantalla, Tailwind CDN) + `app.js` (lógica) + `database.rules.json` (reglas de seguridad de Firebase). Sin build. Firebase compat 9.23 (app, database, auth).
+- **Las reglas son la seguridad real**: el navegador no se puede creer. `database.rules.json` se GENERA con `npm run build:rules` desde `scripts/build-rules.js` (no editar el JSON a mano). El modelo de datos está descrito al principio de `app.js`.
+- Login = Firebase Auth con email interno `usuario@usuarios.somosmanijas.app` (la constante `DOMINIO_EMAIL` debe coincidir con `DOMINIO` en `scripts/build-rules.js`). Panda = cuenta con `superadmins/<uid> = true` cargado a mano en la consola. Nunca hay contraseñas en el repo ni en la base.
+- Pruebas: `npm test` (~85, jsdom + Firebase falso en `tests/helpers.js`, no toca la base real) y `npm run test:rules` (reglas contra el emulador oficial; necesita Java y el puerto 9000 libre). Las reglas se probaron además de punta a punta en un navegador con los emuladores (`?emulador`, solo localhost).
+- Cuidado con los tipos en las reglas: las marcas de tiempo son `Date.now()` (~1.7e12); los montos tienen tope bajo. Las pruebas de reglas usan tiempos reales a propósito.
+- Todo texto de usuario que entra a `innerHTML` pasa por `esc()`. Las acciones usan `data-*` + listeners delegados (nunca datos dentro de `onclick`).
+- Las escrituras pasan por `guardarDb/actualizarDb/borrarDb` (avisan si las reglas rechazan). Cada invitado/ingreso/log es un registro propio (nunca se reescriben listas enteras).
+- Los pasos de consola de Firebase (habilitar Auth, publicar reglas, crear a Panda) los hace el dueño: están en el README. Pendiente a futuro: concepto de Panda más fino (hoy ve todo), lineup público para el Manija, hash/rate-limit de la consulta por DNI.
