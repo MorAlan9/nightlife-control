@@ -5,7 +5,7 @@ const path = require('node:path');
 
 const DOMINIO = 'usuarios.somosmanijas.app'; // debe coincidir con DOMINIO_EMAIL de index.html
 const ROL_DUENO = 'Dueño del Boliche / Admin Local';
-const ROLES_PERSONAL = ['RPP / Promotor', 'DJ / Artista', 'Control de Puerta'];
+const ROLES_PERSONAL = ['RPP / Promotor', 'DJ / Artista', 'Control de Puerta', 'Socio'];
 
 const una = texto => texto.replace(/\s+/g, ' ').trim();
 
@@ -130,6 +130,18 @@ const rules = {
         sePagaDJ: { '.validate': bool },
         ubiBoliche: { '.validate': str(300, 0) },
         ubiAfter: { '.validate': str(300, 0) },
+        // Precios extra de la puerta, por modo: precios/{boliche|after}/{id} = { nombre, monto }
+        precios: {
+          $modo: {
+            '.validate': "$modo === 'boliche' || $modo === 'after'",
+            $pid: {
+              '.validate': "newData.hasChildren(['nombre', 'monto'])",
+              nombre: { '.validate': str(40) },
+              monto: { '.validate': num },
+              $otro: prohibido
+            }
+          }
+        },
         creado: { '.validate': marca },
         $otro: prohibido
       }
@@ -139,6 +151,8 @@ const rules = {
   invitados: {
     $bid: {
       $eid: {
+      // Borrar una noche entera (invitados, ingresos...) lo puede hacer solo Panda
+        '.write': SUPER,
         '.read': esStaff('$bid'),
         $gid: {
           // Cualquiera del personal (salvo DJs) anota; cada RPP toca solo lo suyo y mientras no haya ingresado.
@@ -159,6 +173,7 @@ const rules = {
           cumpleanero: { '.validate': str(100, 0) },
           esCumpleanero: { '.validate': bool },
           monto: { '.validate': num },
+          precioNombre: { '.validate': str(40, 0) },
           ts: { '.validate': marca },
           $otro: prohibido
         }
@@ -170,6 +185,8 @@ const rules = {
   ingresos: {
     $bid: {
       $eid: {
+      // Borrar una noche entera (invitados, ingresos...) lo puede hacer solo Panda
+        '.write': SUPER,
         '.read': esStaff('$bid'),
         $key: {
           '.write': `${esAdmin('$bid')} || (${staffOk('$bid')} && ${noEsDj('$bid')} && !data.exists() && newData.child('porUid').val() === auth.uid)`,
@@ -179,6 +196,7 @@ const rules = {
           porUid: { '.validate': str(128) },
           porNombre: { '.validate': str(100) },
           monto: { '.validate': num },
+          precioNombre: { '.validate': str(40, 0) },
           ts: { '.validate': marca },
           $otro: prohibido
         }
@@ -189,6 +207,8 @@ const rules = {
   djs: {
     $bid: {
       $eid: {
+      // Borrar una noche entera (invitados, ingresos...) lo puede hacer solo Panda
+        '.write': SUPER,
         '.read': esStaff('$bid'),
         $did: {
           '.write': esAdmin('$bid'),
@@ -209,6 +229,8 @@ const rules = {
   logs: {
     $bid: {
       $eid: {
+      // Borrar una noche entera (invitados, ingresos...) lo puede hacer solo Panda
+        '.write': SUPER,
         '.read': esAdmin('$bid'),
         $lid: {
           '.write': `${staffOk('$bid')} && !data.exists() && newData.child('uid').val() === auth.uid`,
@@ -226,6 +248,8 @@ const rules = {
   acceso: {
     $bid: {
       $eid: {
+      // Borrar una noche entera (invitados, ingresos...) lo puede hacer solo Panda
+        '.write': SUPER,
         $k: {
           '.read': true,
           '.write': esStaff('$bid'),

@@ -197,6 +197,7 @@
                         <option value="RPP / Promotor">RPP / Promotor</option>
                         <option value="DJ / Artista">DJ / Artista</option>
                         <option value="Control de Puerta">Control de Puerta / Seguridad</option>
+                        <option value="Socio">Socio (mismos permisos que el admin)</option>
                     </select>
                 </div>
                 <div>
@@ -316,6 +317,18 @@
                         <input type="checkbox" id="sePagaDJ" onchange="guardarPrecios()" class="w-4 h-4 accent-purple-500">
                     </div>
                 </div>
+
+                <!-- Varios precios en la puerta -->
+                <div class="border-t border-emerald-900/30 pt-3 space-y-2">
+                    <h3 class="text-[11px] font-bold text-emerald-300">🎟️ Precios en la puerta · <span id="modoPreciosTitulo">Boliche</span></h3>
+                    <p class="text-[10px] text-gray-500">El precio base es el de arriba (se llama “General”). Sumá otros (ej: Mujeres, Anticipada, VIP) y en la puerta se elige cuál se cobró. Cambian según el botón Boliche / Solo After.</p>
+                    <div id="listaPrecios" class="flex flex-wrap gap-2"></div>
+                    <form id="formPrecio" onsubmit="agregarPrecio(event)" class="flex flex-wrap gap-2">
+                        <input type="text" id="precioNombreNuevo" maxlength="40" required placeholder="Nombre (ej: Mujeres)" class="flex-1 min-w-[10rem] bg-gray-950 border border-gray-800 rounded p-2 text-xs text-white">
+                        <input type="number" id="precioMontoNuevo" min="0" required placeholder="Monto ($)" class="w-32 bg-gray-950 border border-gray-800 rounded p-2 text-xs text-white">
+                        <button type="submit" class="bg-emerald-900/50 hover:bg-emerald-800 text-emerald-100 border border-emerald-700 text-xs font-bold px-3 py-2 rounded transition">+ Agregar precio</button>
+                    </form>
+                </div>
             </section>
 
             <!-- MÉTRICAS CAJA ADMIN -->
@@ -336,6 +349,7 @@
                     <span class="block text-xs text-gray-400">Balance Neto</span>
                     <span id="statBalance" class="text-xl font-bold text-indigo-400">$0</span>
                 </div>
+                <div id="detallePrecios" class="col-span-2 md:col-span-4 text-[11px] text-gray-400 text-center"></div>
             </section>
 
             <!-- HISTORIAL DE AUDITORÍA (PROTEGIDO: SOLO ADMINS) -->
@@ -500,6 +514,10 @@
                                 <option value="Entrada Paga">Entrada Paga (Cobra en puerta)</option>
                             </select>
                         </div>
+                        <div id="precioContainer" class="hidden">
+                            <label class="block text-xs text-gray-400 mb-1">Precio de la entrada</label>
+                            <select id="precioLista" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-sm text-white"></select>
+                        </div>
                         <div id="cumpleContainer" class="hidden md:col-span-2 space-y-2 bg-pink-950/20 p-3 rounded-xl border border-pink-900/40">
                             <label class="block text-xs text-pink-400 font-bold mb-1">🎂 Nombre del Cumpleañero/a</label>
                             <input type="text" id="cumpleanero" placeholder="Ej: Gonzalo Fernández" class="w-full bg-gray-950 border border-pink-900/60 rounded-lg p-2 text-sm text-white">
@@ -612,6 +630,17 @@
                 </button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- MODAL: ELEGIR EL PRECIO COBRADO EN PUERTA -->
+<div id="modalPrecio" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-gray-900 border border-emerald-700/60 rounded-2xl p-6 max-w-md w-full space-y-4 text-center shadow-2xl">
+        <span class="text-3xl">🎟️</span>
+        <h3 class="text-lg font-bold text-white">¿Qué precio se cobró?</h3>
+        <p class="text-xs text-gray-300"><strong id="nombrePersonaPrecio" class="text-emerald-300">--</strong></p>
+        <div id="opcionesPrecio" class="space-y-2 pt-2"></div>
+        <button onclick="cerrarModalPrecio()" class="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 py-2 rounded-xl text-xs font-bold transition">Cancelar</button>
     </div>
 </div>
 

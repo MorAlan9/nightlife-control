@@ -340,3 +340,66 @@ test('el personal publica la hoja de acceso; datos con formato inválido se rech
   await assertFails(db.ref('acceso/b1/e1/clave_mala').set({ nombre: 'Juan', modo: 'boliche', tipoLista: 'Free' }));
   await assertFails(db.ref('acceso/b2/e1/boliche_30111222').set({ nombre: 'Juan', modo: 'boliche', tipoLista: 'Free' }));
 });
+
+// ───────────────────────── Borrado de toda una noche (Panda) ─────────────────────────
+test('Panda puede borrar de una vez todos los datos de una noche; un admin común no', async () => {
+  await env.withSecurityRulesDisabled(async ctx => {
+    const bd = ctx.database();
+    await bd.ref('ingresos/b1/e1/boliche_30111222').set(ingreso('uOwner'));
+    await bd.ref('logs/b1/e1/l1').set({ uid: 'uOwner', texto: 'algo', ts: AHORA });
+  });
+  const borrado = {
+    'invitados/b1/e1': null, 'ingresos/b1/e1': null, 'djs/b1/e1': null, 'logs/b1/e1': null, 'acceso/b1/e1': null
+  };
+  await assertFails(como('uOwner', 'owner').ref().update(borrado));
+  await assertFails(como('uRpp', 'rpp').ref().update(borrado));
+  const panda = como('uSuper', 'panda'); // un contexto por usuario y por prueba
+  await assertSucceeds(panda.ref().update(borrado));
+  for (const ruta of ['invitados/b1/e1', 'ingresos/b1/e1', 'djs/b1/e1', 'logs/b1/e1']) {
+    const snap = await panda.ref(ruta).get();
+    assert.equal(snap.exists(), false, `${ruta} debería estar vacío`);
+  }
+});
+
+// ───────────────────────── Rol Socio ─────────────────────────
+test('Socio: se registra pendiente y sin permisos; no puede auto-aprobarse ni hacerse admin', async () => {
+  const db = como('uSocioNuevo', 'socio1');
+  await assertSucceeds(db.ref().update({
+    'staff/b1/uSocioNuevo': staff('socio1', 'Socio', { aprobado: false }),
+    'usuarios/uSocioNuevo': { bid: 'b1' }
+  }));
+  const otro = como('uSocioNuevo2', 'socio2');
+  await assertFails(otro.ref('staff/b1/uSocioNuevo2').set(staff('socio2', 'Socio', { aprobado: false, isAdmin: true })));
+  await assertFails(otro.ref('staff/b1/uSocioNuevo2').set(staff('socio2', 'Socio', { aprobado: true })));
+});
+
+test('Socio: el admin lo aprueba y le da permisos de admin en una sola operación', async () => {
+  await env.withSecurityRulesDisabled(async ctx => {
+    await ctx.database().ref('staff/b1/uSocioNuevo').set(staff('socio1', 'Socio', { aprobado: false }));
+  });
+  const owner = como('uOwner', 'owner');
+  await assertSucceeds(owner.ref().update({ 'staff/b1/uSocioNuevo/aprobado': true, 'staff/b1/uSocioNuevo/isAdmin': true }));
+  const socio = como('uSocioNuevo', 'socio1');
+  await assertSucceeds(socio.ref('staff/b1').get());
+  await assertSucceeds(socio.ref('eventos/b1/e2').set({ nombre: 'Nueva', fecha: '2026-11-01', creado: AHORA }));
+  await assertFails(socio.ref('invitados/b2/e1').get());
+});
+
+// ───────────────────────── Varios precios en la puerta ─────────────────────────
+test('precios en puerta: el admin los carga con formato válido; el RPP no', async () => {
+  const owner = como('uOwner', 'owner');
+  await assertSucceeds(owner.ref('eventos/b1/e1/precios/boliche/p1').set({ nombre: 'Mujeres', monto: 5000 }));
+  await assertSucceeds(owner.ref('eventos/b1/e1/precios/after/p2').set({ nombre: 'VIP', monto: 20000 }));
+  await assertFails(owner.ref('eventos/b1/e1/precios/otro/p3').set({ nombre: 'X', monto: 1 }));
+  await assertFails(owner.ref('eventos/b1/e1/precios/boliche/p4').set({ nombre: 'Negativo', monto: -1 }));
+  await assertFails(owner.ref('eventos/b1/e1/precios/boliche/p5').set({ nombre: '', monto: 10 }));
+  await assertFails(owner.ref('eventos/b1/e1/precios/boliche/p6').set({ nombre: 'Con extra', monto: 10, truco: true }));
+  await assertFails(como('uRpp', 'rpp').ref('eventos/b1/e1/precios/boliche/p7').set({ nombre: 'Colado', monto: 1 }));
+});
+
+test('anotados e ingresos aceptan el nombre del precio cobrado', async () => {
+  const rpp = como('uRpp', 'rpp');
+  await assertSucceeds(rpp.ref('invitados/b1/e1/pn1').set(guest('uRpp', { dni: '32000001', documento: '32000001', tipoLista: 'Entrada Paga', monto: 5000, precioNombre: 'Mujeres' })));
+  await assertFails(rpp.ref('invitados/b1/e1/pn2').set(guest('uRpp', { dni: '32000002', documento: '32000002', precioNombre: 'x'.repeat(41) })));
+  await assertSucceeds(rpp.ref('ingresos/b1/e1/boliche_32000001').set(ingreso('uRpp', { monto: 5000, precioNombre: 'Mujeres' })));
+});

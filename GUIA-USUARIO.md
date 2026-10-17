@@ -24,8 +24,17 @@ Sistema para manejar las listas y la puerta de un boliche o after. Funciona desd
 |---|---|
 | **Admin** | Todo: crear noches, caja, DJs, aprobar personal, ver el historial, deshacer un ingreso |
 | **RPP / Promotor** | Anotar gente en su lista, editar o quitar lo suyo (mientras no haya ingresado), marcar ingresos, ver su rendimiento y su comisión |
+| **Socio** | Lo mismo que el admin (se le dan los permisos de admin cuando el admin lo aprueba) |
 | **Control de Puerta** | Buscar y marcar ingresos |
 | **DJ** | Ver la noche y el lineup |
+
+## Varios precios en la puerta
+
+En **Configuración de Caja** el precio de arriba es el base y se llama **General**. En **Precios en la puerta** podés sumar otros (ej: Mujeres, Anticipada, VIP), cada uno con su monto. Son distintos para el Boliche y para el After.
+
+- Al anotar a alguien con **Entrada Paga**, el RPP elige con qué precio.
+- En la puerta, al tocar **Marcar** sobre alguien de Entrada Paga, el sistema pregunta **qué precio se cobró** (aparece marcado el que tenía al anotarse). La caja suma lo que realmente se cobró y muestra el detalle por precio.
+- Si quitás un precio, a quienes ya se anotaron con él no les cambia el monto.
 
 ## En la puerta
 

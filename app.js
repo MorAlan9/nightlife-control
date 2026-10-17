@@ -30,6 +30,7 @@ const firebaseConfig = {
 // Debe coincidir con DOMINIO en scripts/build-rules.js
 const DOMINIO_EMAIL = 'usuarios.somosmanijas.app';
 const ROL_DUENO = 'Dueño del Boliche / Admin Local';
+const ROL_SOCIO = 'Socio';
 const USUARIOS_RESERVADOS = ['panda', 'manija', 'admin'];
 const MIN_PASSWORD = 6;
 
@@ -126,6 +127,7 @@ function enlaceMapa(texto) {
 }
 
 function rutaNoche(coleccion) { return `${coleccion}/${bid()}/${eid}`; }
+function rutaEvento() { return `eventos/${bid()}/${eid}`; }
 function claveIngreso(modo, dni) { return `${modo}_${dni}`; }
 
 // ─────────────────────────── Avisos y errores ───────────────────────────
@@ -831,7 +833,7 @@ function renderizarGestionUsuariosAdmin() {
     div.innerHTML = `
       <div>
         <strong class="text-white block text-xs">${esc(u.nombre)} (@${esc(u.username)})</strong>
-        <span class="text-purple-400 block font-mono text-[10px]">${esc(u.rol)}${u.aprobado ? '' : ' · ⏳ pendiente'}</span>
+        <span class="text-purple-400 block font-mono text-[10px]">${esc(u.rol)}${u.aprobado ? '' : ' · ⏳ pendiente'}${!u.aprobado && u.rol === ROL_SOCIO ? ' · al aprobar tendrá permisos de admin' : ''}</span>
       </div>
       <div class="flex items-center gap-2">
         ${soyYo ? '<span class="text-[10px] text-gray-500">(vos)</span>' : `
@@ -847,7 +849,10 @@ async function aprobarPersonal(uid) {
   if (!esAdminActual() || (sesion && uid === sesion.uid)) return;
   const u = staff.find(x => x.id === uid);
   if (!u) return;
-  if (await actualizarDb({ [`staff/${bid()}/${uid}/aprobado`]: true })) registrarLog(`Aprobó la cuenta de ${u.nombre} (@${u.username})`);
+  const cambios = { [`staff/${bid()}/${uid}/aprobado`]: true };
+  // El Socio tiene los mismos permisos que el admin del boliche: al aprobarlo queda como admin
+  if (u.rol === ROL_SOCIO) cambios[`staff/${bid()}/${uid}/isAdmin`] = true;
+  if (await actualizarDb(cambios)) registrarLog(`Aprobó la cuenta de ${u.nombre} (@${u.username})${u.rol === ROL_SOCIO ? ' como Socio (con permisos de admin)' : ''}`);
 }
 
 async function toggleAdminPermiso(uid) {
@@ -1033,10 +1038,78 @@ function renderizarUbicaciones() {
 // ─────────────────────────── Invitados ───────────────────────────
 function toggleOpcionesLista() {
   el('cumpleContainer').classList.toggle('hidden', el('tipoLista').value !== 'Cumpleaños');
+  actualizarOpcionesPrecio();
 }
 
 function precioDeEntrada(modo) {
   return Number(evento && (modo === 'boliche' ? evento.precioBoliche : evento.precioAfter)) || 0;
+}
+
+// ── Varios precios en la puerta ──
+// El precio base de la noche se llama "General"; el admin puede sumar otros (Mujeres, Anticipada, VIP...).
+const NOMBRE_PRECIO_BASE = 'General';
+
+function preciosDelModo(modo) {
+  const lista = [{ id: 'base', nombre: NOMBRE_PRECIO_BASE, monto: precioDeEntrada(modo) }];
+  const extras = (evento && evento.precios && evento.precios[modo]) || {};
+  Object.keys(extras).sort().forEach(id => {
+    if (extras[id] && extras[id].nombre) lista.push({ id, nombre: extras[id].nombre, monto: Number(extras[id].monto) || 0 });
+  });
+  return lista;
+}
+
+function modoDelFormulario() {
+  const editando = invitados.find(i => i.id === el('editGuestId').value);
+  return editando ? editando.modo : modoEventoActual;
+}
+
+// Llena el selector de precio del formulario; solo se muestra si hay más de un precio y la lista es "Entrada Paga"
+function actualizarOpcionesPrecio(preferido) {
+  const select = el('precioLista');
+  const seleccion = preferido || select.value || NOMBRE_PRECIO_BASE;
+  const precios = preciosDelModo(modoDelFormulario());
+  select.innerHTML = precios.map(p => `<option value="${esc(p.nombre)}">${esc(p.nombre)} — ${esc(dinero(p.monto))}</option>`).join('');
+  // Si la persona se anotó con un precio que después se quitó, se conserva esa opción
+  if (!precios.some(p => p.nombre === seleccion)) select.innerHTML += `<option value="${esc(seleccion)}">${esc(seleccion)}</option>`;
+  select.value = seleccion;
+  el('precioContainer').classList.toggle('hidden', el('tipoLista').value !== 'Entrada Paga' || precios.length < 2);
+}
+
+function renderizarPrecios() {
+  el('modoPreciosTitulo').innerText = modoEventoActual === 'after' ? 'Solo After' : 'Boliche';
+  const contenedor = el('listaPrecios');
+  contenedor.innerHTML = '';
+  preciosDelModo(modoEventoActual).forEach(p => {
+    const chip = document.createElement('span');
+    chip.className = 'inline-flex items-center gap-2 bg-gray-950 border border-emerald-900/60 rounded-full px-3 py-1 text-xs text-gray-200';
+    const quitar = p.id !== 'base' && esAdminActual()
+      ? ` <button data-accion="quitar-precio" data-id="${esc(p.id)}" aria-label="Quitar precio" class="text-red-400">✕</button>` : '';
+    chip.innerHTML = `<strong>${esc(p.nombre)}</strong> <span class="text-emerald-300">${esc(dinero(p.monto))}</span>${quitar}`;
+    contenedor.appendChild(chip);
+  });
+}
+
+async function agregarPrecio(e) {
+  e.preventDefault();
+  if (!esAdminActual() || !evento) return;
+  const nombre = el('precioNombreNuevo').value.trim();
+  const monto = Number(el('precioMontoNuevo').value);
+  if (!nombre || !Number.isFinite(monto) || monto < 0) return alert('Poné un nombre y un monto válido.');
+  if (preciosDelModo(modoEventoActual).some(p => p.nombre.toLowerCase() === nombre.toLowerCase())) return alert('Ya hay un precio con ese nombre.');
+
+  const pid = db.ref(`${rutaEvento()}/precios/${modoEventoActual}`).push().key;
+  if (await guardarDb(`${rutaEvento()}/precios/${modoEventoActual}/${pid}`, { nombre, monto })) {
+    registrarLog(`Agregó el precio "${nombre}" (${dinero(monto)}) en puerta del ${modoEventoActual.toUpperCase()}`);
+    el('precioNombreNuevo').value = '';
+    el('precioMontoNuevo').value = '';
+  }
+}
+
+async function quitarPrecio(pid) {
+  if (!esAdminActual() || !evento) return;
+  const precio = preciosDelModo(modoEventoActual).find(p => p.id === pid);
+  if (!precio || !confirm(`¿Quitar el precio "${precio.nombre}"? Las personas ya anotadas con ese precio conservan su monto.`)) return;
+  if (await borrarDb(`${rutaEvento()}/precios/${modoEventoActual}/${pid}`)) registrarLog(`Quitó el precio "${precio.nombre}" del ${modoEventoActual.toUpperCase()}`);
 }
 
 // Arma lo que público puede ver de una persona (de a un DNI), a partir de sus filas de lista
@@ -1085,11 +1158,18 @@ async function guardarInvitado(e) {
     if (!original) return cancelarEdicion();
     if (!puedeGestionarFila(original)) return alert('Solo podés editar invitados de tu propia lista (y mientras no hayan ingresado).');
 
-    // Si ya era Entrada Paga y sigue siéndolo, se respeta el precio con el que se anotó
-    const monto = tipoLista === 'Entrada Paga'
-      ? (original.tipoLista === 'Entrada Paga' ? (original.monto || 0) : precioDeEntrada(original.modo))
-      : 0;
-    const editado = { ...original, ...base, monto };
+    // Si ya era Entrada Paga con ese mismo precio, se respeta el monto con el que se anotó (aunque después cambie el precio)
+    const precios = preciosDelModo(original.modo);
+    const nombreElegido = el('precioLista').value || NOMBRE_PRECIO_BASE;
+    const elegido = precios.find(p => p.nombre === nombreElegido) || precios[0];
+    let monto = 0;
+    let precioNombre = '';
+    if (tipoLista === 'Entrada Paga') {
+      const mismoPrecio = original.tipoLista === 'Entrada Paga' && (original.precioNombre || NOMBRE_PRECIO_BASE) === nombreElegido;
+      monto = mismoPrecio ? (original.monto || 0) : elegido.monto;
+      precioNombre = mismoPrecio ? (original.precioNombre || NOMBRE_PRECIO_BASE) : elegido.nombre;
+    }
+    const editado = { ...original, ...base, monto, precioNombre };
     listaNueva = invitados.map(i => i.id === editId ? editado : i);
     clavesAfectadas = [claveIngreso(original.modo, original.dni), claveIngreso(editado.modo, editado.dni)];
 
@@ -1100,12 +1180,15 @@ async function guardarInvitado(e) {
     const yaAnotado = invitados.some(i => i.dni === dni && i.rppUid === sesion.uid && i.modo === modoEventoActual);
     if (yaAnotado) return alert('Esa persona ya está anotada en tu lista para este evento.');
 
+    const precios = preciosDelModo(modoEventoActual);
+    const elegido = precios.find(p => p.nombre === el('precioLista').value) || precios[0];
     const nuevo = {
       ...base,
       rppUid: sesion.uid,
       rppNombre: sesion.nombre,
       modo: modoEventoActual,
-      monto: tipoLista === 'Entrada Paga' ? precioDeEntrada(modoEventoActual) : 0,
+      monto: tipoLista === 'Entrada Paga' ? elegido.monto : 0,
+      precioNombre: tipoLista === 'Entrada Paga' ? elegido.nombre : '',
       ts: Date.now()
     };
     const gid = db.ref(rutaNoche('invitados')).push().key;
@@ -1139,6 +1222,7 @@ function editarInvitado(id) {
   el('esElCumpleanero').checked = item.esCumpleanero || false;
 
   toggleOpcionesLista();
+  actualizarOpcionesPrecio(item.precioNombre || NOMBRE_PRECIO_BASE);
   el('tituloFormInvitado').innerText = `✏️ Editar Datos de Invitado (${item.modo.toUpperCase()})`;
   el('btnSubmitGuest').innerText = 'Guardar Cambios';
   el('btnCancelarEdicion').classList.remove('hidden');
@@ -1151,6 +1235,7 @@ function cancelarEdicion() {
   el('btnSubmitGuest').innerText = 'Guardar en Lista';
   el('btnCancelarEdicion').classList.add('hidden');
   el('cumpleContainer').classList.add('hidden');
+  actualizarOpcionesPrecio(NOMBRE_PRECIO_BASE);
 }
 
 async function eliminarInvitado(id) {
@@ -1193,11 +1278,17 @@ function solicitarIngreso(filas) {
   el('modalConflicto').classList.remove('hidden');
 }
 
-async function ejecutarIngreso(gid) {
+// `precioElegido` ({ nombre, monto }) llega desde el modal de precios; sin él se usa el precio con el que se anotó.
+async function ejecutarIngreso(gid, precioElegido) {
   const fila = invitados.find(i => i.id === gid);
   if (!fila || !sesion || esManijaActual() || esDjActual()) return;
   const clave = claveIngreso(fila.modo, fila.dni);
   if (ingresos[clave]) return alert('Esa persona ya figura como ingresada.');
+
+  const paga = fila.tipoLista === 'Entrada Paga';
+  // Con varios precios, en la puerta se confirma cuál se cobró
+  if (!precioElegido && paga && preciosDelModo(fila.modo).length > 1) return abrirModalPrecio(fila);
+  const precio = precioElegido || { nombre: paga ? (fila.precioNombre || NOMBRE_PRECIO_BASE) : '', monto: Number(fila.monto) || 0 };
 
   // Un solo ingreso por persona: la base solo deja CREARLO una vez, así dos porteros a la vez no duplican
   const ok = await guardarDb(`${rutaNoche('ingresos')}/${clave}`, {
@@ -1205,10 +1296,35 @@ async function ejecutarIngreso(gid) {
     rppNombre: fila.rppNombre,
     porUid: sesion.uid,
     porNombre: sesion.nombre,
-    monto: Number(fila.monto) || 0,
+    monto: Number(precio.monto) || 0,
+    precioNombre: precio.nombre || '',
     ts: Date.now()
   });
-  if (ok) registrarLog(`Marcó ingreso de "${fila.nombre}" a través de la lista de ${fila.rppNombre} (${fila.modo.toUpperCase()})`);
+  if (ok) registrarLog(`Marcó ingreso de "${fila.nombre}" a través de la lista de ${fila.rppNombre} (${fila.modo.toUpperCase()})${precio.nombre ? ` · precio ${precio.nombre} ${dinero(precio.monto)}` : ''}`);
+}
+
+function abrirModalPrecio(fila) {
+  const opciones = preciosDelModo(fila.modo);
+  const anotado = fila.precioNombre || NOMBRE_PRECIO_BASE;
+  // Si se anotó con un precio que después se quitó, se ofrece igual
+  if (!opciones.some(p => p.nombre === anotado)) opciones.unshift({ id: 'anotado', nombre: anotado, monto: Number(fila.monto) || 0 });
+
+  el('nombrePersonaPrecio').innerText = fila.nombre;
+  const contenedor = el('opcionesPrecio');
+  contenedor.innerHTML = '';
+  opciones.forEach(p => {
+    const esAnotado = p.nombre === anotado;
+    const btn = document.createElement('button');
+    btn.className = `w-full ${esAnotado ? 'bg-emerald-900/60 border-emerald-500' : 'bg-gray-950 border-gray-700'} hover:bg-emerald-900 border text-white py-2.5 px-3 rounded-xl text-sm font-bold transition flex justify-between items-center`;
+    btn.innerHTML = `<span>${esc(p.nombre)}${esAnotado ? ' <span class="text-[10px] font-normal text-emerald-300">(como se anotó)</span>' : ''}</span> <span class="text-emerald-300">${esc(dinero(p.monto))}</span>`;
+    btn.onclick = () => { cerrarModalPrecio(); ejecutarIngreso(fila.id, { nombre: p.nombre, monto: p.monto }); };
+    contenedor.appendChild(btn);
+  });
+  el('modalPrecio').classList.remove('hidden');
+}
+
+function cerrarModalPrecio() {
+  el('modalPrecio').classList.add('hidden');
 }
 
 function cerrarModalConflicto() {
@@ -1238,6 +1354,8 @@ function renderizarTodo() {
 
   configurarVistasPorRol();
   if (esManijaActual()) return;
+  renderizarPrecios();
+  actualizarOpcionesPrecio();
   renderizarUbicaciones();
   renderizarHistorialLogs();
   renderizarDJs();
@@ -1393,6 +1511,18 @@ function actualizarEstadisticasAdmin() {
   const gastosDjs = djs.filter(d => d.modo === modoEventoActual).reduce((suma, d) => suma + (Number(d.monto) || 0), 0);
   const comisiones = evento && evento.sePagaRPP ? entradas.length * (Number(evento.pagoCabeza) || 0) : 0;
 
+  // Detalle de lo recaudado por cada precio de la puerta
+  const porPrecio = {};
+  entradas.forEach(([, ing]) => {
+    if (!(Number(ing.monto) > 0) && !ing.precioNombre) return;
+    const nombre = ing.precioNombre || NOMBRE_PRECIO_BASE;
+    porPrecio[nombre] = porPrecio[nombre] || { cantidad: 0, total: 0 };
+    porPrecio[nombre].cantidad += 1;
+    porPrecio[nombre].total += Number(ing.monto) || 0;
+  });
+  const detalle = Object.entries(porPrecio).map(([nombre, v]) => `${nombre} × ${v.cantidad} = ${dinero(v.total)}`);
+  el('detallePrecios').innerText = detalle.length ? `Por precio: ${detalle.join(' · ')}` : '';
+
   el('statTotal').innerText = unicos.size;
   el('statIngresaron').innerText = entradas.length;
   el('statRecaudado').innerText = dinero(recaudado);
@@ -1465,6 +1595,11 @@ function conectarAcciones() {
     else if (accion === 'deshacer') deshacerIngreso(clave);
     else if (accion === 'editar') editarInvitado(id);
     else if (accion === 'quitar') eliminarInvitado(id);
+  });
+
+  el('listaPrecios').addEventListener('click', ev => {
+    const btn = ev.target.closest('button[data-accion="quitar-precio"]');
+    if (btn) quitarPrecio(btn.dataset.id);
   });
 
   el('roadmapDjs').addEventListener('click', ev => {

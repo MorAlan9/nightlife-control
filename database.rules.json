@@ -75,7 +75,7 @@
         ".read": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true))",
         "$uid": {
           ".read": "auth != null && auth.uid === $uid",
-          ".write": "(auth != null && root.child('superadmins').child(auth.uid).val() === true) || (auth != null && auth.uid !== $uid && ((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true))) || (auth != null && auth.uid === $uid && !data.exists() && root.child('publicos').child($bid).child('nombre').exists() && newData.child('isAdmin').val() === false && newData.child('aprobado').val() === false && (newData.child('rol').val() === 'RPP / Promotor' || newData.child('rol').val() === 'DJ / Artista' || newData.child('rol').val() === 'Control de Puerta') && auth.token.email === newData.child('username').val() + '@usuarios.somosmanijas.app') || (auth != null && auth.uid === $uid && !data.exists() && !root.child('boliches').child($bid).exists() && newData.parent().parent().parent().child('boliches').child($bid).child('creadoPor').val() === auth.uid && newData.child('isAdmin').val() === true && newData.child('aprobado').val() === true && newData.child('rol').val() === 'Dueño del Boliche / Admin Local' && auth.token.email === newData.child('username').val() + '@usuarios.somosmanijas.app') || (auth != null && auth.uid === $uid && data.exists() && newData.exists() && newData.child('isAdmin').val() === data.child('isAdmin').val() && newData.child('aprobado').val() === data.child('aprobado').val() && newData.child('rol').val() === data.child('rol').val() && newData.child('username').val() === data.child('username').val())",
+          ".write": "(auth != null && root.child('superadmins').child(auth.uid).val() === true) || (auth != null && auth.uid !== $uid && ((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true))) || (auth != null && auth.uid === $uid && !data.exists() && root.child('publicos').child($bid).child('nombre').exists() && newData.child('isAdmin').val() === false && newData.child('aprobado').val() === false && (newData.child('rol').val() === 'RPP / Promotor' || newData.child('rol').val() === 'DJ / Artista' || newData.child('rol').val() === 'Control de Puerta' || newData.child('rol').val() === 'Socio') && auth.token.email === newData.child('username').val() + '@usuarios.somosmanijas.app') || (auth != null && auth.uid === $uid && !data.exists() && !root.child('boliches').child($bid).exists() && newData.parent().parent().parent().child('boliches').child($bid).child('creadoPor').val() === auth.uid && newData.child('isAdmin').val() === true && newData.child('aprobado').val() === true && newData.child('rol').val() === 'Dueño del Boliche / Admin Local' && auth.token.email === newData.child('username').val() + '@usuarios.somosmanijas.app') || (auth != null && auth.uid === $uid && data.exists() && newData.exists() && newData.child('isAdmin').val() === data.child('isAdmin').val() && newData.child('aprobado').val() === data.child('aprobado').val() && newData.child('rol').val() === data.child('rol').val() && newData.child('username').val() === data.child('username').val())",
           ".validate": "newData.hasChildren(['nombre', 'username', 'rol', 'isAdmin', 'aprobado'])",
           "nombre": {
             ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 80"
@@ -87,7 +87,7 @@
             ".validate": "newData.isString() && newData.val().length >= 0 && newData.val().length <= 30"
           },
           "rol": {
-            ".validate": "newData.val() === 'Dueño del Boliche / Admin Local' || newData.val() === 'RPP / Promotor' || newData.val() === 'DJ / Artista' || newData.val() === 'Control de Puerta'"
+            ".validate": "newData.val() === 'Dueño del Boliche / Admin Local' || newData.val() === 'RPP / Promotor' || newData.val() === 'DJ / Artista' || newData.val() === 'Control de Puerta' || newData.val() === 'Socio'"
           },
           "isAdmin": {
             ".validate": "newData.isBoolean()"
@@ -134,6 +134,23 @@
           "ubiAfter": {
             ".validate": "newData.isString() && newData.val().length >= 0 && newData.val().length <= 300"
           },
+          "precios": {
+            "$modo": {
+              ".validate": "$modo === 'boliche' || $modo === 'after'",
+              "$pid": {
+                ".validate": "newData.hasChildren(['nombre', 'monto'])",
+                "nombre": {
+                  ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 40"
+                },
+                "monto": {
+                  ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000000"
+                },
+                "$otro": {
+                  ".validate": false
+                }
+              }
+            }
+          },
           "creado": {
             ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 100000000000000"
           },
@@ -146,6 +163,7 @@
     "invitados": {
       "$bid": {
         "$eid": {
+          ".write": "(auth != null && root.child('superadmins').child(auth.uid).val() === true)",
           ".read": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || (auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true))",
           "$gid": {
             ".write": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true)) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && ( (!data.exists() && root.child('staff').child($bid).child(auth.uid).child('rol').val() !== 'DJ / Artista' && newData.child('rppUid').val() === auth.uid) || (data.exists() && data.child('rppUid').val() === auth.uid && (!newData.exists() || newData.child('rppUid').val() === auth.uid) && !root.child('ingresos').child($bid).child($eid).child(data.child('modo').val() + '_' + data.child('dni').val()).exists())))",
@@ -183,6 +201,9 @@
             "monto": {
               ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000000"
             },
+            "precioNombre": {
+              ".validate": "newData.isString() && newData.val().length >= 0 && newData.val().length <= 40"
+            },
             "ts": {
               ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 100000000000000"
             },
@@ -196,6 +217,7 @@
     "ingresos": {
       "$bid": {
         "$eid": {
+          ".write": "(auth != null && root.child('superadmins').child(auth.uid).val() === true)",
           ".read": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || (auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true))",
           "$key": {
             ".write": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true)) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('rol').val() !== 'DJ / Artista' && !data.exists() && newData.child('porUid').val() === auth.uid)",
@@ -215,6 +237,9 @@
             "monto": {
               ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000000"
             },
+            "precioNombre": {
+              ".validate": "newData.isString() && newData.val().length >= 0 && newData.val().length <= 40"
+            },
             "ts": {
               ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 100000000000000"
             },
@@ -228,6 +253,7 @@
     "djs": {
       "$bid": {
         "$eid": {
+          ".write": "(auth != null && root.child('superadmins').child(auth.uid).val() === true)",
           ".read": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || (auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true))",
           "$did": {
             ".write": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true))",
@@ -263,6 +289,7 @@
     "logs": {
       "$bid": {
         "$eid": {
+          ".write": "(auth != null && root.child('superadmins').child(auth.uid).val() === true)",
           ".read": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true))",
           "$lid": {
             ".write": "(auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && !data.exists() && newData.child('uid').val() === auth.uid",
@@ -286,6 +313,7 @@
     "acceso": {
       "$bid": {
         "$eid": {
+          ".write": "(auth != null && root.child('superadmins').child(auth.uid).val() === true)",
           "$k": {
             ".read": true,
             ".write": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || (auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true))",

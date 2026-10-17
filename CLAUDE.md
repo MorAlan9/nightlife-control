@@ -22,3 +22,5 @@ Proyecto público (HTML/JS). Sin datos comerciales.
 - Todo texto de usuario que entra a `innerHTML` pasa por `esc()`. Las acciones usan `data-*` + listeners delegados (nunca datos dentro de `onclick`).
 - Las escrituras pasan por `guardarDb/actualizarDb/borrarDb` (avisan si las reglas rechazan). Cada invitado/ingreso/log es un registro propio (nunca se reescriben listas enteras).
 - Los pasos de consola de Firebase (habilitar Auth, publicar reglas, crear a Panda) los hace el dueño: están en el README. Pendiente a futuro: concepto de Panda más fino (hoy ve todo), lineup público para el Manija, hash/rate-limit de la consulta por DNI.
+- **Orden de despliegue**: si un cambio toca campos que guardan las reglas (`database.rules.json`), el dueño tiene que PUBLICAR las reglas nuevas en Firebase ANTES de pushear el código; si no, las escrituras con campos nuevos se rechazan (`$otro: prohibido`). Regenerar con `npm run build:rules` y probar con `npm run test:rules`.
+- Pruebas de la app: `tests/app.test.js` y `tests/socio-precios.test.js` (se corren juntas con `npm test`).
