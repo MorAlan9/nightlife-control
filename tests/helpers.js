@@ -169,7 +169,7 @@ function crearAuth(usuariosIniciales = [], opciones = {}) {
     },
     async signInWithEmailAndPassword(email, password) {
       const c = cuentas.get(email);
-      if (!c || c.password !== password) throw { code: 'auth/invalid-credential' };
+      if (!c || c.password !== password) throw { code: 'auth/invalid-login-credentials' }; // el código real de Firebase 9.23 (verificado en producción)
       actual = aUsuario(c);
       emitir();
       return { user: actual };

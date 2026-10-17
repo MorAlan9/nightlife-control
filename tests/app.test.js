@@ -1022,3 +1022,12 @@ test('styles.css está al día con las clases que usan index.html y app.js', () 
     'styles.css quedó desactualizado: corré npm run build:css');
   fs.rmSync(temporal, { force: true });
 });
+
+test('los mensajes de error de login cubren los códigos reales de Firebase 9.x y los nuevos', async () => {
+  const app = await cargarApp();
+  for (const code of ['auth/invalid-login-credentials', 'auth/invalid-credential', 'auth/wrong-password', 'auth/user-not-found']) {
+    assert.match(app.ev(`mensajeAuth({ code: '${code}' })`), /incorrectos/, code);
+  }
+  assert.match(app.ev("mensajeAuth({ code: 'auth/too-many-requests' })"), /Demasiados intentos/);
+  assert.match(app.ev("mensajeAuth({ code: 'auth/network-request-failed' })"), /Sin conexión/);
+});

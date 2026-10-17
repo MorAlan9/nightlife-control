@@ -294,7 +294,8 @@ function cambiarEvento(id) {
 // ─────────────────────────── Autenticación ───────────────────────────
 function mensajeAuth(err) {
   switch (err && err.code) {
-    case 'auth/invalid-credential':
+    case 'auth/invalid-login-credentials': // nombre que devuelve Firebase 9.x
+    case 'auth/invalid-credential': // nombre en versiones más nuevas
     case 'auth/wrong-password':
     case 'auth/user-not-found':
     case 'auth/invalid-email': return 'Usuario o contraseña incorrectos.';
