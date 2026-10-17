@@ -17,7 +17,7 @@
 
 // Configuración web de Firebase (no es un secreto: la seguridad la dan las reglas de la base)
 const firebaseConfig = {
-  apiKey: "AIzaSyDm3MjL9Drba2G19vzrgeNiuPWx76ipd3g",
+  apiKey: "AIzaSyDm3Mjl9Drba2G19vzrgeNiuPWx76ipd3g",
   authDomain: "somosmanijas-1bb2c.firebaseapp.com",
   databaseURL: "https://somosmanijas-1bb2c-default-rtdb.firebaseio.com",
   projectId: "somosmanijas-1bb2c",
