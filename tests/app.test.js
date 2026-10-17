@@ -1007,3 +1007,18 @@ test('el HTML no llama a funciones que no existen y app.js no usa ids inexistent
   assert.deepEqual(sinDefinir, []);
   assert.deepEqual(idsSinHtml, []);
 });
+
+test('styles.css está al día con las clases que usan index.html y app.js', () => {
+  const { execFileSync } = require('node:child_process');
+  const fs = require('node:fs');
+  const os = require('node:os');
+  const path = require('node:path');
+  const raiz = path.join(__dirname, '..');
+  const temporal = path.join(os.tmpdir(), `styles-${process.pid}.css`);
+  execFileSync(process.execPath, [path.join(raiz, 'node_modules', 'tailwindcss', 'lib', 'cli.js'),
+    '-c', path.join(raiz, 'tailwind.config.js'), '-i', path.join(raiz, 'src', 'tailwind.css'), '-o', temporal, '--minify'],
+  { cwd: raiz, stdio: 'ignore' });
+  assert.equal(fs.readFileSync(temporal, 'utf8'), fs.readFileSync(path.join(raiz, 'styles.css'), 'utf8'),
+    'styles.css quedó desactualizado: corré npm run build:css');
+  fs.rmSync(temporal, { force: true });
+});

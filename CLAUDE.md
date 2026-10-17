@@ -14,7 +14,7 @@
 Proyecto público (HTML/JS). Sin datos comerciales.
 
 ### Notas técnicas
-- Archivos: `index.html` (pantalla, Tailwind CDN) + `app.js` (lógica) + `database.rules.json` (reglas de seguridad de Firebase). Sin build. Firebase compat 9.23 (app, database, auth).
+- Archivos: `index.html` (pantalla) + `app.js` (lógica) + `styles.css` (Tailwind COMPILADO: tras tocar clases correr `npm run build:css` y commitearlo; una prueba lo verifica) + `database.rules.json` (reglas de Firebase). Firebase compat 9.23 (app, database, auth). Deploy: Netlify corre `scripts/build-site.js` y publica `dist/` (ver `netlify.toml`, `_headers`).
 - **Las reglas son la seguridad real**: el navegador no se puede creer. `database.rules.json` se GENERA con `npm run build:rules` desde `scripts/build-rules.js` (no editar el JSON a mano). El modelo de datos está descrito al principio de `app.js`.
 - Login = Firebase Auth con email interno `usuario@usuarios.somosmanijas.app` (la constante `DOMINIO_EMAIL` debe coincidir con `DOMINIO` en `scripts/build-rules.js`). Panda = cuenta con `superadmins/<uid> = true` cargado a mano en la consola. Nunca hay contraseñas en el repo ni en la base.
 - Pruebas: `npm test` (~85, jsdom + Firebase falso en `tests/helpers.js`, no toca la base real) y `npm run test:rules` (reglas contra el emulador oficial; necesita Java y el puerto 9000 libre). Las reglas se probaron además de punta a punta en un navegador con los emuladores (`?emulador`, solo localhost).

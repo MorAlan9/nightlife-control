@@ -1,0 +1,8 @@
+# Netlify publica solo dist/ (lo arma scripts/build-site.js a partir de index.html, app.js, styles.css y _headers).
+[build]
+  command = "node scripts/build-site.js"
+  publish = "dist"
+
+# No hace falta instalar las herramientas de desarrollo (emuladores, tests) para publicar.
+[build.environment]
+  NPM_FLAGS = "--omit=dev"

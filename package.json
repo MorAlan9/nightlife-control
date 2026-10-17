@@ -6,12 +6,16 @@
   "scripts": {
     "test": "node scripts/verificar-referencias.js && node --test tests/app.test.js",
     "test:rules": "node scripts/test-rules.js",
-    "build:rules": "node scripts/build-rules.js"
+    "build:rules": "node scripts/build-rules.js",
+    "build:css": "tailwindcss -c tailwind.config.js -i src/tailwind.css -o styles.css --minify",
+    "build:site": "node scripts/build-site.js",
+    "build": "npm run build:css && npm run build:site"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^3.0.4",
     "firebase": "^10.14.1",
     "firebase-tools": "^13.35.1",
-    "jsdom": "^26.1.0"
+    "jsdom": "^26.1.0",
+    "tailwindcss": "^3.4.17"
   }
 }

@@ -46,5 +46,27 @@ node scripts/serve.js 5391                                                    # 
 
 `?emulador` solo funciona en `localhost`/`127.0.0.1`; en producción no hace nada.
 
-## Deploy
-Netlify (publicar la carpeta tal cual: `index.html` y `app.js`).
+## Deploy (Netlify)
+`netlify.toml` ya está configurado: corre `node scripts/build-site.js` y publica solo `dist/` (`index.html`, `app.js`, `styles.css` y los encabezados de `_headers`). No hace falta instalar nada en Netlify.
+
+Si cambiás clases de Tailwind en `index.html` o `app.js`, regenerá el CSS **antes de commitear**: `npm run build:css` (hay una prueba que avisa si `styles.css` quedó desactualizado). Para armar `dist/` localmente: `npm run build`.
+
+## Lista de verificación de entrega
+
+Antes de dárselo al cliente, en este orden:
+
+1. Hacer los 3 pasos de **Puesta en marcha en Firebase** (arriba).
+2. Subir los cambios (`git push`) y esperar el deploy de Netlify.
+3. Prueba rápida en la página real (10 minutos):
+   - Registrar un boliche de prueba → entrar con la cuenta de Panda → **Habilitar** → entrar con el boliche.
+   - Crear una noche, cargar precio y una ubicación, anotar a una persona, marcarla y ver que la caja suma.
+   - Registrar un RPP de prueba, aprobarlo desde el panel del admin y anotar con su cuenta.
+   - Entrar como **Manija**, escribir el DNI anotado y ver el resultado.
+   - Borrar los datos de prueba (el boliche y los usuarios de prueba, desde la consola de Firebase).
+4. Entregar al cliente: la URL, [`GUIA-USUARIO.md`](GUIA-USUARIO.md) y la cuenta de Panda para quien administre.
+
+### Limitaciones conocidas (conviene avisarle al cliente)
+- **Contraseña olvidada**: no se puede recuperar desde la página (el login usa un email interno, sin casilla real). Se resuelve borrando la cuenta en Firebase → Authentication; la persona vuelve a registrarse. Lo mismo si un admin "elimina" a alguien del personal: su usuario queda ocupado hasta que se borre también esa cuenta en la consola.
+- **Consulta del Manija por DNI**: no tiene límite de intentos; alguien podría probar DNIs de a uno. Solo devuelve el nombre y el lugar de esa persona en la lista.
+- **Panda ve todos los boliches** (es el superadmin).
+- El lineup no es público: el Manija no lo ve.

@@ -5,8 +5,8 @@ const path = require('node:path');
 
 const RAIZ = path.join(__dirname, '..');
 const PUERTO = Number(process.argv[2]) || 5173;
-const TIPOS = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml' };
-const PUBLICOS = new Set(['index.html', 'app.js']); // lo único que se sirve: nada de node_modules ni reglas
+const TIPOS = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml' };
+const PUBLICOS = new Set(['index.html', 'app.js', 'styles.css']); // lo único que se sirve: nada de node_modules ni reglas
 
 http.createServer((req, res) => {
   const pedido = decodeURIComponent(req.url.split('?')[0]).replace(/^\/+/, '') || 'index.html';
