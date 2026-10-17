@@ -81,6 +81,11 @@
                     </button>
                 </div>
             </div>
+
+            <!-- Centro de Ayuda: siempre visible, también antes de ingresar -->
+            <button id="btnAyuda" onclick="abrirAyuda()" class="bg-sky-950/70 hover:bg-sky-900 text-sky-200 border border-sky-800 text-xs px-3 py-1.5 rounded-lg transition font-bold flex items-center gap-1">
+                ❓ Ayuda
+            </button>
         </div>
     </header>
 
@@ -663,6 +668,26 @@
     </div>
 </div>
 
+<!-- BOTÓN "?" FLOTANTE: vuelve a mostrar el recorrido guiado de la pantalla en la que estás -->
+<button id="btnTutorial" onclick="tutorialAbrir(true)" aria-label="Ver el tutorial de esta pantalla" title="Ver el tutorial de esta pantalla"
+        class="hidden fixed bottom-4 left-3 z-30 h-11 w-11 flex items-center justify-center rounded-full border border-sky-500 bg-gray-900 text-sky-300 text-lg font-bold shadow-lg transition hover:bg-sky-500 hover:text-gray-950">?</button>
+
+<!-- MODAL: CENTRO DE AYUDA -->
+<div id="modalAyuda" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto" role="dialog" aria-labelledby="tituloAyuda">
+    <div class="bg-gray-900 border border-sky-800/60 rounded-2xl p-5 max-w-2xl w-full space-y-4 shadow-2xl my-6">
+        <div class="flex justify-between items-center border-b border-gray-800 pb-3">
+            <h3 id="tituloAyuda" class="text-base font-bold text-white">❓ Centro de Ayuda</h3>
+            <button onclick="cerrarAyuda()" aria-label="Cerrar" class="text-gray-400 hover:text-white text-sm">✕</button>
+        </div>
+        <button id="btnVerRecorrido" onclick="ayudaVerRecorrido()" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 rounded-xl transition text-sm">
+            ▶ Ver el recorrido guiado de esta pantalla
+        </button>
+        <p class="text-[11px] text-gray-400">Tocá un tema para ver cómo se hace, paso a paso y cómo se llena cada campo. En cada pantalla también tenés el botón <strong class="text-sky-300">?</strong> abajo a la izquierda.</p>
+        <div id="listaAyuda" class="space-y-2"></div>
+    </div>
+</div>
+
 <script src="app.js"></script>
+<script src="tutorial.js"></script>
 </body>
 </html>

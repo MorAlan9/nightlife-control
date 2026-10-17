@@ -59,6 +59,7 @@ let manija = null;          // { bid, nombreBoliche }  (modo público, sin cuent
 let publicos = {};          // bid -> { nombre, eventoActivo, ubiBoliche }
 let publicosCargados = false;
 let eventos = {};           // eid -> evento del boliche actual
+let eventosCargados = false; // true cuando llegó la primera lista de noches (para no confundir "cargando" con "sin noches")
 let eid = null;             // noche seleccionada
 let eidDeseado = null;      // noche recién creada, a seleccionar cuando llegue
 let evento = null;          // { id, ...datos } de la noche seleccionada
@@ -229,10 +230,12 @@ function suscribirBoliche() {
   limpiarGrupo('boliche');
   limpiarGrupo('evento');
   eventos = {}; evento = null; eid = null; staff = [];
+  eventosCargados = false;
   invitados = []; ingresos = {}; djs = []; historialLogs = [];
 
   escuchar('boliche', `eventos/${bid()}`, snap => {
     eventos = snap.val() || {};
+    eventosCargados = true;
     reconciliarEventoSeleccionado();
   });
 
@@ -373,7 +376,7 @@ async function alCambiarAuth() {
   const turno = ++turnoAuth;
 
   limpiarGrupo('sesion'); limpiarGrupo('boliche'); limpiarGrupo('evento');
-  sesion = null; bolicheActual = null; eventos = {}; evento = null; eid = null;
+  sesion = null; bolicheActual = null; eventos = {}; evento = null; eid = null; eventosCargados = false;
   invitados = []; ingresos = {}; djs = []; staff = []; historialLogs = []; bolichesTodos = [];
 
   if (!user) {
@@ -560,6 +563,7 @@ function cambiarTabAuth(tab) {
 
   if (tab === 'regPersonal') actualizarSelectBoliches();
   if (tab === 'manija') actualizarSelectBolichesManija();
+  if (typeof tutorialRefrescar === 'function') tutorialRefrescar();
 }
 
 function opcionesDeBoliches() {

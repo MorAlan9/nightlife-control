@@ -1,5 +1,15 @@
 # Guía de uso · SomosManijas
 
+## Tutorial dentro del sistema
+
+No hace falta leer este documento para empezar: el sistema trae su propio tutorial.
+
+- **Recorrido guiado**: la primera vez que entrás a cada pantalla, el sistema resalta cada campo y te explica qué poner y cómo ("Paso 1 de 7"). Podés avanzar con **Siguiente**, volver con **Anterior** o cerrarlo con **Saltar**.
+- **Botón ❓ (abajo a la izquierda)**: en cualquier pantalla vuelve a mostrar el recorrido.
+- **Botón ❓ Ayuda (arriba)**: abre el Centro de Ayuda, con una guía por tema (cómo registrarse, anotar invitados, la puerta, la caja, etc.). Está disponible antes de ingresar.
+
+El contenido de esta guía es el mismo que el del Centro de Ayuda.
+
 Sistema para manejar las listas y la puerta de un boliche o after. Funciona desde el celular o la compu, sin instalar nada.
 
 ## Primeros pasos del dueño del boliche

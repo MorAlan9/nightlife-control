@@ -4,7 +4,7 @@
   "private": true,
   "description": "Gestor de listas para boliches y afters (SomosManijas)",
   "scripts": {
-    "test": "node scripts/verificar-referencias.js && node --test tests/app.test.js tests/socio-precios.test.js tests/borrar.test.js",
+    "test": "node scripts/verificar-referencias.js && node --test tests/app.test.js tests/socio-precios.test.js tests/borrar.test.js tests/tutorial.test.js",
     "test:rules": "node scripts/test-rules.js",
     "build:rules": "node scripts/build-rules.js",
     "build:css": "tailwindcss -c tailwind.config.js -i src/tailwind.css -o styles.css --minify",

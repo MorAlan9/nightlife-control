@@ -5,7 +5,7 @@ const path = require('node:path');
 
 const RAIZ = path.join(__dirname, '..');
 const DIST = path.join(RAIZ, 'dist');
-const ARCHIVOS = ['index.html', 'app.js', 'styles.css', '_headers'];
+const ARCHIVOS = ['index.html', 'app.js', 'tutorial.js', 'styles.css', '_headers'];
 
 for (const archivo of ARCHIVOS) {
   if (!fs.existsSync(path.join(RAIZ, archivo))) {

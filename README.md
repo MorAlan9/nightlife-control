@@ -27,6 +27,11 @@ Aplicación web para el control de listas y accesos en boliches y afters. Sin bu
 ### Seguridad: qué cambió
 Antes la clave maestra y la de reseteo estaban escritas en el código (repo público), las contraseñas de todos se guardaban en texto plano en la base, y cualquiera con la dirección de la base podía leer y escribir todo. Ahora el login es de Firebase Auth (la contraseña nunca se guarda en la base) y las **reglas** de la base son las que deciden quién puede qué. Las claves viejas ya no se usan en ningún lado: si las reutilizaste en otro servicio, cambialas.
 
+## Tutorial y ayuda
+El sistema trae un **recorrido guiado** por pantalla (se abre solo la primera vez, y siempre con el botón ❓ abajo a la izquierda) y un **Centro de Ayuda** (botón ❓ Ayuda del encabezado), igual que Despensa 24/7 y Sistema Rotisería. Todo el contenido está en [`tutorial.js`](tutorial.js): `TUTORIALES` (pasos por pantalla y por rol) y `AYUDA_TEMAS` (guía por tema).
+
+**Al agregar o cambiar una función o un campo, actualizá `tutorial.js`.** Una prueba (`tests/tutorial.test.js`) avisa si un paso apunta a algo que ya no existe en la pantalla.
+
 ## Desarrollo y pruebas
 
 ```bash

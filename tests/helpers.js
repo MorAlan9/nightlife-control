@@ -6,8 +6,10 @@ const { JSDOM } = require('jsdom');
 
 const RAIZ = path.join(__dirname, '..');
 const APP_JS = fs.readFileSync(path.join(RAIZ, 'app.js'), 'utf8');
+const TUTORIAL_JS = fs.readFileSync(path.join(RAIZ, 'tutorial.js'), 'utf8');
 const HTML = fs.readFileSync(path.join(RAIZ, 'index.html'), 'utf8')
-  .replace('<script src="app.js"></script>', () => `<script>${APP_JS}</script>`);
+  .replace('<script src="app.js"></script>', () => `<script>${APP_JS}</script>`)
+  .replace('<script src="tutorial.js"></script>', () => `<script>${TUTORIAL_JS}</script>`);
 
 const DOMINIO = 'usuarios.somosmanijas.app';
 const clonar = v => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)));
@@ -208,6 +210,7 @@ async function cargarApp({ datos = {}, cuentas = [], sesion = null, confirmar = 
         database: () => ({ ref: ruta => backend.crearRef(ruta || '') }),
         auth: () => auth
       };
+      window.__sinTutorialAuto = true; // las pruebas controlan el tutorial a mano (sin timers ni apertura automática)
       window.alert = msg => alertas.push(String(msg));
       window.confirm = () => (typeof confirmar === 'function' ? confirmar() : confirmar);
       window.prompt = () => (typeof respuestaPrompt === 'function' ? respuestaPrompt() : respuestaPrompt);

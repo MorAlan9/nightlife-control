@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-const js = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
+const js = ['app.js', 'tutorial.js'].map(f => fs.readFileSync(path.join(__dirname, '..', f), 'utf8')).join('\n');
 
 const usadas = [...new Set([...html.matchAll(/\son(?:click|submit|input|change)="([a-zA-Z_]\w*)\(/g)].map(m => m[1]))];
 const sinDefinir = usadas.filter(f => !new RegExp(`function ${f}\\b`).test(js));
