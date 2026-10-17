@@ -403,3 +403,55 @@ test('anotados e ingresos aceptan el nombre del precio cobrado', async () => {
   await assertFails(rpp.ref('invitados/b1/e1/pn2').set(guest('uRpp', { dni: '32000002', documento: '32000002', precioNombre: 'x'.repeat(41) })));
   await assertSucceeds(rpp.ref('ingresos/b1/e1/boliche_32000001').set(ingreso('uRpp', { monto: 5000, precioNombre: 'Mujeres' })));
 });
+
+// ───────────────────────── Borrar una noche / una productora ─────────────────────────
+const sembrarRestoDeLaNoche = async () => env.withSecurityRulesDisabled(async ctx => {
+  const bd = ctx.database();
+  await bd.ref('ingresos/b1/e1/boliche_30111222').set(ingreso('uOwner'));
+  await bd.ref('logs/b1/e1/l1').set({ uid: 'uOwner', texto: 'algo', ts: AHORA });
+});
+const borrarNoche = { 'eventos/b1/e1': null, 'invitados/b1/e1': null, 'ingresos/b1/e1': null, 'djs/b1/e1': null, 'logs/b1/e1': null, 'acceso/b1/e1': null };
+
+test('el admin puede borrar SU noche entera (el evento y todo lo que cuelga de él)', async () => {
+  await sembrarRestoDeLaNoche();
+  const owner = como('uOwner', 'owner');
+  await assertSucceeds(owner.ref().update({ ...borrarNoche, 'publicos/b1/eventoActivo': null }));
+  for (const ruta of ['eventos/b1/e1', 'invitados/b1/e1', 'ingresos/b1/e1', 'djs/b1/e1', 'logs/b1/e1']) {
+    const snap = await owner.ref(ruta).get();
+    assert.equal(snap.exists(), false, `${ruta} debería estar borrado`);
+  }
+});
+
+test('el admin NO puede vaciar el historial ni los datos dejando la noche viva', async () => {
+  await sembrarRestoDeLaNoche();
+  const owner = como('uOwner', 'owner');
+  await assertFails(owner.ref('logs/b1/e1').remove());
+  await assertFails(owner.ref().update({ 'logs/b1/e1': null, 'invitados/b1/e1': null }));
+});
+
+test('borrar una noche: ni un RPP, ni el admin de otro boliche', async () => {
+  await sembrarRestoDeLaNoche();
+  await assertFails(como('uRpp', 'rpp').ref().update(borrarNoche));
+  await assertFails(como('uOwner2', 'owner2').ref().update(borrarNoche));
+  await assertFails(como('uOwner2', 'owner2').ref('eventos/b1/e1').remove());
+});
+
+const borrarProductora = {
+  'boliches/b1': null, 'publicos/b1': null, 'staff/b1': null, 'eventos/b1': null, 'invitados/b1': null,
+  'ingresos/b1': null, 'djs/b1': null, 'logs/b1': null, 'acceso/b1': null,
+  'usuarios/uOwner': null, 'usuarios/uRpp': null, 'usuarios/uRpp2': null, 'usuarios/uDj': null, 'usuarios/uPend': null
+};
+
+test('Panda puede borrar una productora entera; su propio admin no', async () => {
+  await sembrarRestoDeLaNoche();
+  await assertFails(como('uOwner', 'owner').ref().update(borrarProductora));
+  await assertFails(como('uOwner', 'owner').ref('boliches/b1').remove());
+  const panda = como('uSuper', 'panda');
+  await assertSucceeds(panda.ref().update(borrarProductora));
+  for (const ruta of ['boliches/b1', 'staff/b1', 'eventos/b1', 'invitados/b1/e1', 'usuarios/uRpp']) {
+    const snap = await panda.ref(ruta).get();
+    assert.equal(snap.exists(), false, `${ruta} debería estar borrado`);
+  }
+  const otro = await panda.ref('boliches/b2').get();
+  assert.equal(otro.exists(), true, 'las demás productoras no se tocan');
+});

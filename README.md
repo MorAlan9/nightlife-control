@@ -66,6 +66,7 @@ Antes de dárselo al cliente, en este orden:
 4. Entregar al cliente: la URL, [`GUIA-USUARIO.md`](GUIA-USUARIO.md) y la cuenta de Panda para quien administre.
 
 ### Limitaciones conocidas (conviene avisarle al cliente)
+- **Borrar una productora o a un integrante del personal no borra su usuario de login** (la página no puede hacerlo): queda en Firebase → Authentication y su nombre de usuario sigue ocupado hasta que se borre ahí.
 - **Contraseña olvidada**: no se puede recuperar desde la página (el login usa un email interno, sin casilla real). Se resuelve borrando la cuenta en Firebase → Authentication; la persona vuelve a registrarse. Lo mismo si un admin "elimina" a alguien del personal: su usuario queda ocupado hasta que se borre también esa cuenta en la consola.
 - **Consulta del Manija por DNI**: no tiene límite de intentos; alguien podría probar DNIs de a uno. Solo devuelve el nombre y el lugar de esa persona en la lista.
 - **Panda ve todos los boliches** (es el superadmin).

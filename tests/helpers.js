@@ -192,7 +192,7 @@ function crearAuth(usuariosIniciales = [], opciones = {}) {
 
 // Crea la app lista para usar.
 //  datos: contenido inicial de la base · cuentas: [{uid, email, password}] · sesion: email con sesión ya iniciada
-async function cargarApp({ datos = {}, cuentas = [], sesion = null, confirmar = true, opcionesBackend = {}, opcionesAuth = {}, reloj = null } = {}) {
+async function cargarApp({ datos = {}, cuentas = [], sesion = null, confirmar = true, respuestaPrompt = null, opcionesBackend = {}, opcionesAuth = {}, reloj = null } = {}) {
   const backend = crearBackend(datos, opcionesBackend);
   const auth = crearAuth(cuentas, opcionesAuth);
   if (sesion) auth._entrarSinPasar(sesion);
@@ -210,6 +210,7 @@ async function cargarApp({ datos = {}, cuentas = [], sesion = null, confirmar = 
       };
       window.alert = msg => alertas.push(String(msg));
       window.confirm = () => (typeof confirmar === 'function' ? confirmar() : confirmar);
+      window.prompt = () => (typeof respuestaPrompt === 'function' ? respuestaPrompt() : respuestaPrompt);
       window.localStorage.setItem('vortexx_current_user', '{"pass":"vieja"}');
       if (reloj) {
         const RealDate = window.Date;

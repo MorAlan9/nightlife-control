@@ -28,6 +28,10 @@ Sistema para manejar las listas y la puerta de un boliche o after. Funciona desd
 | **Control de Puerta** | Buscar y marcar ingresos |
 | **DJ** | Ver la noche y el lineup |
 
+## Borrar una noche
+
+Si cargaste una noche por error o ya no la necesitás, el admin toca **🗑️ Borrar noche** (arriba, junto al selector de noche). Se borra la noche con todos sus invitados, ingresos, DJs, caja e historial, y **no se puede deshacer**: por seguridad hay que escribir el nombre exacto de la noche para confirmar. Para borrar solo los datos de prueba sin perder la noche, pedíselo a Panda.
+
 ## Varios precios en la puerta
 
 En **Configuración de Caja** el precio de arriba es el base y se llama **General**. En **Precios en la puerta** podés sumar otros (ej: Mujeres, Anticipada, VIP), cada uno con su monto. Son distintos para el Boliche y para el After.
@@ -51,6 +55,10 @@ Quien quiere saber si está en lista entra a **Manija**, elige el boliche, escri
 - el mapa del After (solo si está anotado ahí).
 
 No puede ver a nadie más.
+
+## Borrar una productora (solo Panda)
+
+En el panel central, cada tarjeta tiene un botón **🗑️**. Borra la productora con todas sus noches, personal, invitados e historial. Hay que escribir el nombre exacto para confirmar. Los usuarios de login del personal siguen existiendo en Firebase → Authentication: si hace falta que puedan registrarse de nuevo con el mismo usuario, hay que borrarlos también ahí.
 
 ## Si algo no anda
 

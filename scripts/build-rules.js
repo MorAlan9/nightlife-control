@@ -15,6 +15,12 @@ const esStaff = b => `(${SUPER} || ${staffOk(b)})`;
 const esAdmin = b => `(${SUPER} || (${staffOk(b)} && root.child('staff').child(${b}).child(auth.uid).child('isAdmin').val() === true))`;
 const noEsDj = b => `root.child('staff').child(${b}).child(auth.uid).child('rol').val() !== 'DJ / Artista'`;
 
+// Borrar una noche entera (sus invitados, ingresos, DJs, historial...): Panda siempre; el admin del boliche solo si en la
+// MISMA operación también se borra la noche (el evento). Así no puede vaciar el historial dejando la noche viva.
+// newData.parent() x3 sube hasta la raíz de lo que quedaría escrito.
+const seBorraLaNoche = (b, e) => `!newData.parent().parent().parent().child('eventos').child(${b}).child(${e}).exists()`;
+const puedeBorrarNoche = (b, e) => `(${SUPER} || (${esAdmin(b)} && ${seBorraLaNoche(b, e)}))`;
+
 const str = (max, min = 1) => `newData.isString() && newData.val().length >= ${min} && newData.val().length <= ${max}`;
 const num = 'newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000000';
 // Marcas de tiempo (Date.now() ronda 1.7e12): sin el tope de los montos
@@ -76,6 +82,8 @@ const rules = {
 
   staff: {
     $bid: {
+      // Borrar la productora entera: solo Panda
+      '.write': SUPER,
       '.read': esAdmin('$bid'),
       $uid: {
         '.read': 'auth != null && auth.uid === $uid',
@@ -117,6 +125,8 @@ const rules = {
 
   eventos: {
     $bid: {
+      // Borrar la productora entera: solo Panda
+      '.write': SUPER,
       '.read': esStaff('$bid'),
       $eid: {
         '.write': esAdmin('$bid'),
@@ -150,9 +160,11 @@ const rules = {
 
   invitados: {
     $bid: {
+      // Borrar la productora entera: solo Panda
+      '.write': SUPER,
       $eid: {
-      // Borrar una noche entera (invitados, ingresos...) lo puede hacer solo Panda
-        '.write': SUPER,
+      // Borrar la noche entera: Panda, o el admin si se borra también la noche
+        '.write': puedeBorrarNoche('$bid', '$eid'),
         '.read': esStaff('$bid'),
         $gid: {
           // Cualquiera del personal (salvo DJs) anota; cada RPP toca solo lo suyo y mientras no haya ingresado.
@@ -184,9 +196,11 @@ const rules = {
   // Un ingreso por persona y modo. Solo se puede CREAR una vez: si dos porteros marcan a la vez, el segundo falla.
   ingresos: {
     $bid: {
+      // Borrar la productora entera: solo Panda
+      '.write': SUPER,
       $eid: {
-      // Borrar una noche entera (invitados, ingresos...) lo puede hacer solo Panda
-        '.write': SUPER,
+      // Borrar la noche entera: Panda, o el admin si se borra también la noche
+        '.write': puedeBorrarNoche('$bid', '$eid'),
         '.read': esStaff('$bid'),
         $key: {
           '.write': `${esAdmin('$bid')} || (${staffOk('$bid')} && ${noEsDj('$bid')} && !data.exists() && newData.child('porUid').val() === auth.uid)`,
@@ -206,9 +220,11 @@ const rules = {
 
   djs: {
     $bid: {
+      // Borrar la productora entera: solo Panda
+      '.write': SUPER,
       $eid: {
-      // Borrar una noche entera (invitados, ingresos...) lo puede hacer solo Panda
-        '.write': SUPER,
+      // Borrar la noche entera: Panda, o el admin si se borra también la noche
+        '.write': puedeBorrarNoche('$bid', '$eid'),
         '.read': esStaff('$bid'),
         $did: {
           '.write': esAdmin('$bid'),
@@ -228,9 +244,11 @@ const rules = {
 
   logs: {
     $bid: {
+      // Borrar la productora entera: solo Panda
+      '.write': SUPER,
       $eid: {
-      // Borrar una noche entera (invitados, ingresos...) lo puede hacer solo Panda
-        '.write': SUPER,
+      // Borrar la noche entera: Panda, o el admin si se borra también la noche
+        '.write': puedeBorrarNoche('$bid', '$eid'),
         '.read': esAdmin('$bid'),
         $lid: {
           '.write': `${staffOk('$bid')} && !data.exists() && newData.child('uid').val() === auth.uid`,
@@ -247,9 +265,11 @@ const rules = {
   // Lo único que ve el público (Manija): se consulta de a UNA persona, por DNI. No se puede listar.
   acceso: {
     $bid: {
+      // Borrar la productora entera: solo Panda
+      '.write': SUPER,
       $eid: {
-      // Borrar una noche entera (invitados, ingresos...) lo puede hacer solo Panda
-        '.write': SUPER,
+      // Borrar la noche entera: Panda, o el admin si se borra también la noche
+        '.write': puedeBorrarNoche('$bid', '$eid'),
         $k: {
           '.read': true,
           '.write': esStaff('$bid'),

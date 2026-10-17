@@ -72,6 +72,7 @@
     },
     "staff": {
       "$bid": {
+        ".write": "(auth != null && root.child('superadmins').child(auth.uid).val() === true)",
         ".read": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true))",
         "$uid": {
           ".read": "auth != null && auth.uid === $uid",
@@ -103,6 +104,7 @@
     },
     "eventos": {
       "$bid": {
+        ".write": "(auth != null && root.child('superadmins').child(auth.uid).val() === true)",
         ".read": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || (auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true))",
         "$eid": {
           ".write": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true))",
@@ -162,8 +164,9 @@
     },
     "invitados": {
       "$bid": {
+        ".write": "(auth != null && root.child('superadmins').child(auth.uid).val() === true)",
         "$eid": {
-          ".write": "(auth != null && root.child('superadmins').child(auth.uid).val() === true)",
+          ".write": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || (((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true)) && !newData.parent().parent().parent().child('eventos').child($bid).child($eid).exists()))",
           ".read": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || (auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true))",
           "$gid": {
             ".write": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true)) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && ( (!data.exists() && root.child('staff').child($bid).child(auth.uid).child('rol').val() !== 'DJ / Artista' && newData.child('rppUid').val() === auth.uid) || (data.exists() && data.child('rppUid').val() === auth.uid && (!newData.exists() || newData.child('rppUid').val() === auth.uid) && !root.child('ingresos').child($bid).child($eid).child(data.child('modo').val() + '_' + data.child('dni').val()).exists())))",
@@ -216,8 +219,9 @@
     },
     "ingresos": {
       "$bid": {
+        ".write": "(auth != null && root.child('superadmins').child(auth.uid).val() === true)",
         "$eid": {
-          ".write": "(auth != null && root.child('superadmins').child(auth.uid).val() === true)",
+          ".write": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || (((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true)) && !newData.parent().parent().parent().child('eventos').child($bid).child($eid).exists()))",
           ".read": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || (auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true))",
           "$key": {
             ".write": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true)) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('rol').val() !== 'DJ / Artista' && !data.exists() && newData.child('porUid').val() === auth.uid)",
@@ -252,8 +256,9 @@
     },
     "djs": {
       "$bid": {
+        ".write": "(auth != null && root.child('superadmins').child(auth.uid).val() === true)",
         "$eid": {
-          ".write": "(auth != null && root.child('superadmins').child(auth.uid).val() === true)",
+          ".write": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || (((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true)) && !newData.parent().parent().parent().child('eventos').child($bid).child($eid).exists()))",
           ".read": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || (auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true))",
           "$did": {
             ".write": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true))",
@@ -288,8 +293,9 @@
     },
     "logs": {
       "$bid": {
+        ".write": "(auth != null && root.child('superadmins').child(auth.uid).val() === true)",
         "$eid": {
-          ".write": "(auth != null && root.child('superadmins').child(auth.uid).val() === true)",
+          ".write": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || (((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true)) && !newData.parent().parent().parent().child('eventos').child($bid).child($eid).exists()))",
           ".read": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true))",
           "$lid": {
             ".write": "(auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && !data.exists() && newData.child('uid').val() === auth.uid",
@@ -312,8 +318,9 @@
     },
     "acceso": {
       "$bid": {
+        ".write": "(auth != null && root.child('superadmins').child(auth.uid).val() === true)",
         "$eid": {
-          ".write": "(auth != null && root.child('superadmins').child(auth.uid).val() === true)",
+          ".write": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || (((auth != null && root.child('superadmins').child(auth.uid).val() === true) || ((auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true) && root.child('staff').child($bid).child(auth.uid).child('isAdmin').val() === true)) && !newData.parent().parent().parent().child('eventos').child($bid).child($eid).exists()))",
           "$k": {
             ".read": true,
             ".write": "((auth != null && root.child('superadmins').child(auth.uid).val() === true) || (auth != null && root.child('staff').child($bid).child(auth.uid).child('aprobado').val() === true && root.child('boliches').child($bid).child('aprobado').val() === true))",

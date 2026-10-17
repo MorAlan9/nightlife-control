@@ -792,6 +792,7 @@ function renderizarPanelSuperAdminPanda() {
         </div>
         <div class="flex items-center gap-1.5">
           ${b.aprobado ? `<button data-accion="gestionar" data-bid="${esc(b.id)}" class="text-[10px] font-bold px-2.5 py-1.5 rounded transition bg-purple-900 hover:bg-purple-800 text-purple-100 border border-purple-600">${actual ? '👁️ Viendo' : '👁️ Ver'}</button>` : ''}
+          <button data-accion="borrar-productora" data-bid="${esc(b.id)}" aria-label="Borrar productora" title="Borrar productora" class="text-[10px] font-bold px-2 py-1.5 rounded transition bg-gray-900 hover:bg-red-950 text-red-300 border border-red-900">🗑️</button>
           <button data-accion="aprobar" data-bid="${esc(b.id)}" class="text-[10px] font-bold px-2.5 py-1.5 rounded transition ${b.aprobado ? 'bg-red-950 hover:bg-red-900 text-red-200 border border-red-800' : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow'}">
             ${b.aprobado ? '🚫 Deshabilitar' : '✅ Habilitar'}
           </button>
@@ -808,6 +809,35 @@ async function toggleEstadoAprobacionBoliche(id) {
   // Solo los boliches habilitados aparecen en las listas públicas
   cambios[`publicos/${id}`] = aprobar ? { nombre: b.nombre } : null;
   await actualizarDb(cambios);
+}
+
+// Borra una productora entera (solo Panda): noches, invitados, personal, historial y sus datos públicos.
+// Las cuentas de ingreso (Authentication) no se pueden borrar desde la página: quedan en la consola de Firebase.
+async function borrarProductora(id) {
+  if (!esPandaActual()) return;
+  const productora = bolichesTodos.find(x => x.id === id);
+  if (!productora) return;
+  if (!confirmarEscribiendo(productora.nombre, `Vas a BORRAR la productora "${productora.nombre}" con todas sus noches, invitados, personal e historial.`)) return;
+
+  let uids = [];
+  try {
+    uids = Object.keys((await db.ref(`staff/${id}`).once('value')).val() || {});
+  } catch (err) {
+    return errorEscritura(err);
+  }
+
+  const cambios = {};
+  ['boliches', 'publicos', 'staff', 'eventos', 'invitados', 'ingresos', 'djs', 'logs', 'acceso'].forEach(coleccion => { cambios[`${coleccion}/${id}`] = null; });
+  uids.forEach(uid => { cambios[`usuarios/${uid}`] = null; });
+  if (!await actualizarDb(cambios)) return;
+
+  if (bolicheActual && bolicheActual.bid === id) {
+    limpiarGrupo('boliche'); limpiarGrupo('evento');
+    bolicheActual = null; eventos = {}; evento = null; eid = null;
+    invitados = []; ingresos = {}; djs = []; staff = []; historialLogs = [];
+    verificarSesion();
+  }
+  alert('🗑️ Productora borrada. Si hace falta liberar los usuarios de login del personal, borralos también en Firebase → Authentication.');
 }
 
 // Panda entra a mirar y gestionar un boliche concreto
@@ -887,6 +917,7 @@ function renderizarSelectorEventos() {
   const esActiva = !!eid && !!publicos[bid()] && publicos[bid()].eventoActivo === eid;
   el('badgeEventoActivo').classList.toggle('hidden', !esActiva);
   el('btnEventoActivo').classList.toggle('hidden', esActiva || !eid);
+  el('btnBorrarNoche').classList.toggle('hidden', !eid);
 }
 
 function abrirModalEvento() {
@@ -930,6 +961,28 @@ async function crearEvento(e) {
   });
   if (!ok) { eidDeseado = null; return; }
   cerrarModalEvento();
+}
+
+// Para lo que no se puede deshacer: hay que escribir el nombre exacto
+function confirmarEscribiendo(nombre, queSeBorra) {
+  const escrito = prompt(`⚠️ ${queSeBorra}\nNo se puede deshacer.\n\nPara confirmar, escribí exactamente:\n${nombre}`);
+  if (escrito === null) return false;
+  if (escrito.trim() !== nombre) {
+    alert('El nombre no coincide. No se borró nada.');
+    return false;
+  }
+  return true;
+}
+
+// Borra la noche entera: el evento y todo lo que cuelga de él (el admin del boliche o Panda)
+async function borrarNoche() {
+  if (!esAdminActual() || !evento || !bolicheActual) return;
+  if (!confirmarEscribiendo(evento.nombre, `Vas a BORRAR la noche "${evento.nombre}" con todos sus invitados, ingresos, DJs, caja e historial.`)) return;
+
+  const cambios = {};
+  ['eventos', 'invitados', 'ingresos', 'djs', 'logs', 'acceso'].forEach(coleccion => { cambios[rutaNoche(coleccion)] = null; });
+  if (publicos[bid()] && publicos[bid()].eventoActivo === eid) cambios[`publicos/${bid()}/eventoActivo`] = null;
+  if (await actualizarDb(cambios)) alert('🧹 Noche borrada.');
 }
 
 async function marcarEventoActivo() {
@@ -1621,6 +1674,7 @@ function conectarAcciones() {
     if (!btn) return;
     if (btn.dataset.accion === 'aprobar') toggleEstadoAprobacionBoliche(btn.dataset.bid);
     else if (btn.dataset.accion === 'gestionar') gestionarBoliche(btn.dataset.bid);
+    else if (btn.dataset.accion === 'borrar-productora') borrarProductora(btn.dataset.bid);
   });
 }
 
